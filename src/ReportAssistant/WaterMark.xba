@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="WaterMark" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+
+Option Explicit
+
+Private oDialog As Object
+Private oWaterMark As Object
+
+Sub Main
+	Dim oEvent As New com.sun.star.awt.ItemEvent
+
+	Set oDialog = loadDialog(&quot;WaterMarkDialog&quot;)
+	Set oWaterMark = New WaterMarkClass
+
+	With oDialog
+		.getControl(&quot;TextFontName&quot;).Model.StringItemList = getFontList()
+		If (oWaterMark.hasPictureWaterMark()) Then
+			Set oEvent.Source = .getControl(&quot;ImageWaterMark&quot;)
+		ElseIf (oWaterMark.hasTextWaterMark()) Then
+			Set oEvent.Source = .getControl(&quot;TextWaterMark&quot;)
+		Else
+			Set oEvent.Source = .getControl(&quot;NoWaterMark&quot;)
+		End If
+
+		oEvent.Source.State = True
+
+		WaterMarkType_change(oEvent)
+
+		.execute()
+		.dispose()
+		oWaterMark.dispose()
+	End With
+
+End Sub
+
+Sub remove()
+	Set oWaterMark = New WaterMarkClass
+	With oWaterMark
+		.removeImageWaterMark()		&apos; 移除頁面背景圖片
+		.removePictureWaterMark()	&apos; 移除圖片浮水印
+		.removeTextWaterMark()		&apos; 移除文字浮水印
+		.dispose()
+	End With
+End Sub
+
+
+Function WaterMarkType_change(oEvent As com.sun.star.awt.ItemEvent)
+	Dim oNoWaterMark As Object
+	Dim oImageWaterMark As Object
+	Dim oTextWaterMark As Object
+
+	With oDialog
+		Set oNoWaterMark = .getControl(&quot;NoWaterMark&quot;)		&apos; 不使用浮水印
+		NoWaterMarkModeCheck(oNoWaterMark)
+		Set oImageWaterMark = .getControl(&quot;ImageWaterMark&quot;)	&apos; 圖片浮水印
+		ImageWaterMarkModeCheck(oImageWaterMark)
+		Set oTextWaterMark = .getControl(&quot;TextWaterMark&quot;)	&apos; 文字浮水印
+		TextWaterMarkModeCheck(oTextWaterMark)
+	End With
+
+End Function
+
+
+Private Function NoWaterMarkModeCheck(oControl As Object)
+	With oWaterMark
+		If (.hasImageWaterMark() Or _
+			.hasPictureWaterMark() Or _
+			.hasTextWaterMark()) Then
+			setButtonsMode(True)
+		End If
+	End With
+
+End Function
+
+Private Function ImageWaterMarkModeCheck(oControl As Object)
+	Dim oDialogModel As Object
+	Dim bState As Boolean
+	Dim bEnable As Boolean
+
+	Set oDialogModel = oDialog.Model
+	bState = oControl.State
+
+	With oDialogModel
+		.PickupImage.Enabled = bState
+		.ImagePath.Enabled = bState
+
+		If (oWaterMark.hasPictureWaterMark()) Then
+			.ImagePath.Label = &quot;(現存浮水印)&quot;
+			bEnable = True
+		Else
+			bEnable = False
+		End If
+		.ScaleRatioLabel.Enabled = bEnable
+		.ScaleRatio.Enabled = bEnable
+		.TransparenceBar.Enabled = bEnable
+		.TransparenceLabel.Enabled = bEnable
+
+		If (oWaterMark.ScaleRatio = 0) Then
+			.ScaleRatio.Text = &quot;自動&quot;
+		Else
+			.ScaleRatio.Text = (oWaterMark.ScaleRatio * 100) &amp; &quot;%&quot;
+		End If
+
+		.TransparenceBar.ScrollValue = oWaterMark.ImageTransparence
+		ShowImageTransparence(oWaterMark.ImageTransparence)
+	End With
+	
+End Function
+
+Private Function TextWaterMarkModeCheck(oControl As Object)
+	Dim oDialogModel As Object
+	Dim bState As Boolean
+
+	Set oDialogModel = oDialog.Model
+	bState = oControl.State
+
+	With oDialogModel
+		.TextWordsLabel.Enabled = bState
+		.TextWords.Enabled = bState
+		.TextFontNameLabel.Enabled = bState
+		.TextFontName.Enabled = bState
+		.TextFontSizeLabel.Enabled = bState
+		.TextFontSize.Enabled = bState
+		.TextFontColorLabel.Enabled = bState
+		.TextFontColor.Enabled = bState
+		.TranslucentButton.Enabled = bState
+		.TextAngleLabel.Enabled = bState
+		.TextAngle45.Enabled = bState
+		.TextAngle0.Enabled = bState
+
+		.TextWords.Text = oWaterMark.TextWords
+		.TextFontName.Text = oWaterMark.TextFontName
+		&apos; TODO:目前只能自動
+		.TextFontSize.Text = &quot;自動&quot;
+		&apos;---------------------------------
+		.TextFontColor.BackgroundColor = oWaterMark.TextFontColor
+		.TranslucentButton.State = IIF(oWaterMark.TextTransparence = 0, 0, 1)
+		.TextAngle45.State = IIF(oWaterMark.TextAngle &lt;&gt; 0, True, False)
+		.TextAngle0.State = IIF(oWaterMark.TextAngle = 0, True, False)
+	End With
+End Function
+
+&apos;-------------------------------------------
+&apos; 選取圖片
+&apos;-------------------------------------------
+Function PickupImage_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oFilePicker As Object
+	Dim sFileName As String
+
+	Set oFilePicker = createUnoService(&quot;com.sun.star.ui.dialogs.FilePicker&quot;)
+
+	With oFilePicker
+		.setMultiSelectionMode(False)	&apos; 多選模式關閉
+		.appendFilter(&quot;圖片格式&quot;, &quot;*.jpg;*.jpeg;*.png;*.bmp;*.gif;*.tif;*.eps;*.svg;*.emf&quot;)
+		.setTitle( &quot;選擇圖片&quot; )
+		If (.execute() = 1) Then
+			&apos;oDialog.getControl(&quot;ImagePath&quot;).Text = convertFromUrl(.Files(0))
+			sFileName = convertFromUrl(.Files(0))
+			oWaterMark.ImagePath = sFileName
+			With oDialog.Model
+				.ImagePath.Label = sFileName
+				.ScaleRatioLabel.Enabled = True
+				.ScaleRatio.Enabled = True
+				.TransparenceBar.Enabled = True
+				.TransparenceLabel.Enabled = True
+			End With
+			oDialog.getControl(&quot;ScaleRatio&quot;).setFocus()
+			setButtonsMode(True)
+		End If
+		.dispose()
+	End With
+
+End Function
+
+&apos; 按下「套用」或「確定」按鈕
+Function ApplyButton_click(oEvent As Object)
+	setButtonsMode(False)
+	ProcessingWatermark()
+
+	&apos; 確定按鈕就結束對話視窗
+	If (oEvent.Source.Model.Name = &quot;OKButton&quot;) Then
+		oDialog.endExecute()
+	End If
+End Function
+
+Private Function setButtonsMode(bMode As Boolean)
+
+	With oDialog.Model
+		.ApplyButton.Enabled = bMode
+		.OKButton.Enabled = bMode
+	End With
+
+End Function
+
+Private Function ProcessingWatermark()
+	Dim oNoWaterMark As Object
+	Dim oImageWaterMark As Object
+	Dim oTextWaterMark As Object
+
+	With oDialog
+		Set oNoWaterMark = .getControl(&quot;NoWaterMark&quot;)		&apos; 不使用浮水印
+		Set oImageWaterMark = .getControl(&quot;ImageWaterMark&quot;)	&apos; 使用圖片浮水印
+		Set oTextWaterMark = .getControl(&quot;TextWaterMark&quot;)	&apos; 使用文字浮水印
+	End With
+
+	With oWaterMark
+		If (oNoWaterMark.State) Then
+			.removeImageWaterMark()		&apos; 移除頁面背景圖片
+			.removePictureWaterMark()	&apos; 移除圖片浮水印
+			.removeTextWaterMark()		&apos; 移除文字浮水印
+		End If
+
+		If (oImageWaterMark.State) Then
+			.ImageTransparence = oDialog.getControl(&quot;TransparenceBar&quot;).Value
+			&apos;.setImageWaterMark()
+			.setPictureWaterMark()
+		End If
+
+		If (oTextWaterMark.State) Then
+
+			.TextWords = oDialog.getControl(&quot;TextWords&quot;).Text
+			.TextFontName = oDialog.getControl(&quot;TextFontName&quot;).Text
+			&apos; TODO:目前只能自動
+			&apos;.TextFontSize.Text = &quot;自動&quot;
+			&apos;---------------------------------
+			.TextFontColor = oDialog.getControl(&quot;TextFontColor&quot;).Model.BackgroundColor
+			.TextTransparence = IIF(oDialog.getControl(&quot;TranslucentButton&quot;).State, 50, 0)
+			.TextAngle = IIF(oDialog.getControl(&quot;TextAngle45&quot;).State, 45, 0)
+			.setTextWaterMark()
+		End If
+	End With
+End Function
+
+Function ScaleRatio_textChange(oEvent As com.sun.star.awt.TextEvent)
+	oWaterMark.ScaleRatio = Round(Val(oEvent.Source.Text) / 100, 2)
+	setButtonsMode(True)
+End Function
+
+Function TransparenceBar_Adjust(oEvent As com.sun.star.awt.AdjustmentEvent)
+	ShowImageTransparence(oEvent.Value)
+	setButtonsMode(True)
+End Function
+
+Private Function ShowImageTransparence(nTransparence)
+	Dim sMsg As String
+
+	Select Case (nTransparence)
+		Case 0
+			sMsg = &quot;不刷淡&quot;
+		Case 100
+			sMsg = &quot;看不見&quot;
+		Case Else
+			sMsg = &quot;刷淡：&quot; &amp; nTransparence &amp; &quot;%&quot;
+	End Select
+	oDialog.getControl(&quot;TransparenceLabel&quot;).Text = sMsg
+End Function
+
+&apos;============================================
+&apos; 以下是文字浮水印處理程序區
+&apos;============================================
+&apos;
+&apos; 文字有異動
+Function TextWords_change(oEvent As Object)
+	Dim oTextCtrl As Object
+	Dim bButtonOn As Boolean
+
+	Set oTextCtrl = oEvent.Source
+	&apos; 去掉左邊空白
+	&apos;oTextCtrl.Text = LTrim(oTextCtrl.Text)
+
+	bButtonOn = IIF(Len(oTextCtrl.Text) &gt; 0, True, False)
+	setButtonsMode(bButtonOn)
+	
+End Function
+
+Function TextWaterMark_ControlChange(oEvent As Object)
+	setButtonsMode(True)
+End Function
+
+Function ColorPicker(oEvent As Object)
+	Dim oSource As Object
+	Dim oPicker As Object
+	Dim aProps() As Object
+
+	Set oSource = oEvent.Source
+	oPicker = CreateUnoService(&quot;com.sun.star.ui.dialogs.ColorPicker&quot;)
+	With oPicker
+		&apos;.setTitle(&quot;選擇顏色&quot;)
+		aProps = .getPropertyValues()
+		aProps(0).Value = oSource.Model.BackgroundColor
+		.setPropertyValues(aProps)
+		If (.execute = com.sun.star.ui.dialogs.ExecutableDialogResults.OK) Then
+			oSource.Model.BackgroundColor = .PropertyValues(0).Value
+			TextWaterMark_ControlChange(oEvent)
+		End If
+		.dispose()
+	End With
+End Function
+</script:module>

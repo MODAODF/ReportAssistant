@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="ApplyPersonal" script:language="StarBasic">REM  *****  BASIC  *****
+Option Explicit
+
+Private Const Preference_Personal_Primary_Key = &quot;/Preference/Personal&quot;	&apos; 個人資訊
+Private Const Preference_FontFamily_Primary_Key = &quot;/Preference/Font&quot;	&apos; 偏好字型
+
+Sub Main
+	Dim oDoc As Object
+	Dim oDialog As Object
+	Dim oPersonal As Object
+	Dim oDocProps As Object
+	Dim oUserProps As Object
+	Dim nPropAttrib As Long
+
+	Set oDoc = ThisComponent
+	Set oDialog = loadDialog(&quot;ApplyPersonalDialog&quot;)
+	Set oPersonal = getResource(Preference_Personal_Primary_Key)
+	Set oDocProps = oDoc.getDocumentProperties()
+	Set oUserProps = oDocProps.getUserDefinedProperties()
+	&apos; 參考 https://www.openoffice.org/api/docs/common/ref/com/sun/star/beans/PropertyAttribute.html
+	nPropAttrib = com.sun.star.beans.PropertyAttribute.REMOVEABLE + _
+				  com.sun.star.beans.PropertyAttribute.MAYBEVOID
+
+	With oDialog
+		With .Model
+			.TitleField.Text = oDocProps.Title
+			.SubjectField.Text = oDocProps.Subject
+			.KeywordsField.Text = Join(oDocProps.Keywords, &quot;,&quot;)
+			.DescriptionField.Text = oDocProps.Description
+			&apos; 個人資料
+			.DeptName.Text = oPersonal.getValue(&quot;機關名稱&quot;)
+			.DeptAddress.Text = oPersonal.getValue(&quot;機關地址&quot;)
+			.Contact.Text = oPersonal.getValue(&quot;承辦人&quot;)
+			.Email.Text = oPersonal.getValue(&quot;電子信箱&quot;)
+			.TelNo.Text = oPersonal.getValue(&quot;電話&quot;)
+			.FaxNo.Text = oPersonal.getValue(&quot;傳真&quot;)
+		End With
+
+		If (.execute()) Then
+			removeAllUserProperty(oUserProps)	&apos; 先移除原先的資料(不管有沒有)
+			With oDialog.Model
+				oDocProps.Title = .TitleField.Text
+				oDocProps.Subject = .SubjectField.Text
+				oDocProps.Keywords = Split(.KeywordsField.Text, &quot;,&quot;)
+				oDocProps.Description = .DescriptionField.Text
+				If (.CheckDeptName.State) Then
+					oUserProps.addProperty(&quot;機關名稱&quot;, nPropAttrib, .DeptName.Text)
+				End If
+				If (.CheckDeptAddress.State) Then
+					oUserProps.addProperty(&quot;機關地址&quot;, nPropAttrib, .DeptAddress.Text)
+				End If
+				If (.CheckContact.State) Then
+					oDocProps.Author = .Contact.Text
+					oUserProps.addProperty(&quot;承辦人&quot;, nPropAttrib, .Contact.Text)
+				End If
+				If (.CheckEmail.State) Then
+					oUserProps.addProperty(&quot;電子信箱&quot;, nPropAttrib, .Email.Text)
+				End If
+				If (.CheckTelNo.State) Then
+					oUserProps.addProperty(&quot;電話&quot;, nPropAttrib, .TelNo.Text)
+				End If
+				If (.CheckFaxNo.State) Then
+					oUserProps.addProperty(&quot;傳真&quot;, nPropAttrib, .FaxNo.Text)
+				End If
+			End With
+		End If
+		.dispose()
+	End With
+
+End Sub
+
+&apos; 依據 CheckBox 狀態，啟閉相應的 Text Box
+Function CheckBox_action(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+	Dim oControl As Object
+	Dim sTextBoxName As String
+	
+	Set oControl = oEvent.Source
+	Set oDialog = oControl.getContext()
+
+	With oControl.Model
+		Select Case .Name
+			Case &quot;CheckDeptName&quot;		&apos; 機關名稱
+				sTextBoxName = &quot;DeptName&quot;
+			Case &quot;CheckDeptAddress&quot;		&apos; 機關地址
+				sTextBoxName = &quot;DeptAddress&quot;
+			Case &quot;CheckContact&quot;			&apos; 承辦人
+				sTextBoxName = &quot;Contact&quot;
+			Case &quot;CheckEmail&quot;			&apos; 電子信箱
+				sTextBoxName = &quot;Email&quot;
+			Case &quot;CheckTelNo&quot;			&apos; 電話
+				sTextBoxName = &quot;TelNo&quot;
+			Case &quot;CheckFaxNo&quot;			&apos; 傳真
+				sTextBoxName = &quot;FaxNo&quot;
+		End Select
+		oDialog.getControl(sTextBoxName).setEnable(.State)
+	End With
+
+End Function
+
+Function removeAllUserProperty(oUserProps As Object)
+	Dim oSetInfo As Object
+	Dim aNames() As String
+	Dim sName As String
+	aNames = Array(&quot;Info 1&quot;, &quot;Info 2&quot;, &quot;Info 3&quot;, &quot;Info 4&quot;, _
+					&quot;機關名稱&quot;, &quot;機關地址&quot;, &quot;承辦人&quot;, &quot;電子信箱&quot;, &quot;電話&quot;, &quot;傳真&quot;)
+
+	With oUserProps
+		Set oSetInfo = .getPropertySetInfo()
+		For Each sName In aNames
+			If oSetInfo.hasPropertyByName(sName) Then
+				.removeProperty(sName)
+			End If
+		Next sName
+	End With
+End Function
+
+Sub FontStyle
+	Dim oFonts As Object
+	Dim nResult As Long
+	Dim sFontAsian As String
+	Dim sFontEnglish As String
+
+	Set oFonts = getResource(Preference_FontFamily_Primary_Key)
+	&apos; 加速
+	sFontAsian = oFonts.getValue(&quot;中文字型&quot;)
+	sFontEnglish = oFonts.getValue(&quot;英文字型&quot;)
+
+	If (sFontAsian = &quot;&quot; Or sFontEnglish = &quot;&quot;) Then
+		Msgbox(&quot;尚未設定中、英文偏好字型，請先執行「自訂偏好設定」。&quot;, MB_ICONSTOP, &quot;無法套用字型&quot;)
+		Exit Sub
+	End If
+
+	nResult = Msgbox(&quot;請注意！&quot; &amp; Chr(10) &amp; _
+		   &quot;文件中所有中文部分，將會套用「&quot; &amp; sFontAsian &amp; &quot;」、&quot; &amp; Chr(10) &amp; _
+		   &quot;英文部分，將會套用「&quot; &amp; sFontEnglish &amp; &quot;」。&quot;, _
+		   MB_OKCANCEL + MB_ICONINFORMATION, &quot;套用偏好字型&quot;)
+
+	If (nResult &lt;&gt; IDOK) Then
+		Exit Sub
+	End If
+
+	Dim oStyleFamilies As Object
+	Dim oParaStyles As Object
+	Dim aFamilyNames()
+	Dim oStyle As Object
+	Dim nStyleCount%, nIdx%, nSubIdx%
+	Dim oStatus As Object
+	Dim nCount As Long
+	Dim nTotal As Long
+
+	Set oStatus = ThisComponent.CurrentController.StatusIndicator
+	
+	nCount = 0 : nTotal = 0
+
+	oStyleFamilies = ThisComponent.StyleFamilies
+	aFamilyNames = oStyleFamilies.ElementNames
+	&apos; 計算符合 Style 的數量
+	For nIdx = LBound(aFamilyNames) To UBound(aFamilyNames)
+		If (aFamilyNames(nIdx) = &quot;CharacterStyles&quot; OR _
+			aFamilyNames(nIdx) = &quot;ParagraphStyles&quot;  OR _
+			aFamilyNames(nIdx) = &quot;CellStyles&quot;) Then
+			oParaStyles = oStyleFamilies.getByName(aFamilyNames(nIdx))
+			nTotal = nTotal + oParaStyles.getCount()
+		End If
+	Next nIdx
+
+	oStatus.Start(&quot;套用字型&quot;, nTotal)
+
+	For nIdx = LBound(aFamilyNames) To UBound(aFamilyNames)
+		If (aFamilyNames(nIdx) = &quot;CharacterStyles&quot; OR _
+			aFamilyNames(nIdx) = &quot;ParagraphStyles&quot;  OR _
+			aFamilyNames(nIdx) = &quot;CellStyles&quot;) Then
+			oParaStyles = oStyleFamilies.getByName(aFamilyNames(nIdx))
+			nStyleCount = oParaStyles.getCount() - 1
+			For nSubIdx = 0 To nStyleCount
+				oStyle = oParaStyles.getByIndex(nSubIdx)
+				oStyle.CharFontNameAsian = sFontAsian
+				oStyle.CharFontName = sFontEnglish
+				nCount = nCount + 1
+				oStatus.setValue(nCount)
+			Next nSubIdx
+		End If
+	Next nIdx
+	oStatus.End()
+End Sub
+
+</script:module>

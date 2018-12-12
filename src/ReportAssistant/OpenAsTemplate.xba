@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="OpenAsTemplate" script:language="StarBasic">REM  *****  BASIC  *****
+Option Explicit
+
+Sub Main
+	Dim oFilePicker As Object
+	Dim oTemplatePath As Object
+	Dim oArgs()
+	Dim oDoc As Object
+
+	Set oTemplatePath = getResource(&quot;/Preference/Path/範本目錄&quot;)
+
+	If (oTemplatePath.Value = &quot;&quot;) Then
+		oTemplatePath.Value = USER_WORK_DIR
+	End If
+
+	Set oFilePicker = createUnoService(&quot;com.sun.star.ui.dialogs.OfficeFilePicker&quot;)
+
+	With oFilePicker
+		.setDisplayDirectory(ConvertToURL(oTemplatePath.Value))
+		.setMultiSelectionMode(False)	&apos; 多選模式關閉
+		.appendFilter(&quot;範本格式&quot;, &quot;*.ott;*.ots;&quot;)
+		.setTitle( &quot;開啟範本&quot; )
+		If (.execute() = 1) Then
+			Set oDoc = Tools.Misc.OpenDocument(.SelectedFiles(0), oArgs)
+		End If
+		.dispose()
+	End With
+
+End Sub
+</script:module>

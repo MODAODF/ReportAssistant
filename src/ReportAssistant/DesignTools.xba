@@ -1,0 +1,556 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="DesignTools" script:language="StarBasic">REM  *****  BASIC  *****
+Option Explicit
+
+Private Const NUMBERING_LETTER As String = &quot;AaIi1????Aa?1Ａ①一壹壹甲子?????壹일ㄱ가㉠㉮أ??????АаАаАаАа????????????&quot;
+&apos; 報表助理
+Function ReportAssistantButton_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+	Set oDialog = oEvent.Source.Context
+
+	With oDialog.Model
+		If (.Step = 1) Then
+			Exit Function
+		End If
+		.Step = 1
+		If (.Tag = &quot;scalc&quot;) Then
+			.StringType.Label = &quot;格式&quot;
+			.AdvanceSetting.EnableVisible = True
+			.FormatList.EnableVisible = True
+			.DelField.EnableVisible = False
+		Else
+			.StringType.Label = &quot;一般&quot;
+			.AdvanceSetting.EnableVisible = False
+			.FormatList.EnableVisible = False
+			.DelField.EnableVisible = True
+		End If
+	End With	&apos; oDialog.Model
+End Function
+
+&apos; 處理插入個人資訊按鈕
+Function PersonButton_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oPopup As Object
+	Dim oRectangle As New com.sun.star.awt.Rectangle
+	Dim iChoice As Integer
+
+	Set oPopup = createUnoService(&quot;com.sun.star.awt.PopupMenu&quot;)
+	With oRectangle
+		.X = 0
+		.Y = 0
+		.Width = 0
+		.Height = oEvent.Source.Size.Height
+	End With	&apos;oRectangle
+	With oPopup
+		.insertItem(1, &quot;插入機關名稱&quot;, 0, 0 )
+		.insertItem(2, &quot;插入機關地址&quot;, 0, 1 )
+		.insertItem(3, &quot;插入承辦人姓名&quot;, 0, 2 )
+		.insertItem(4, &quot;插入電子信箱&quot;, 0, 3 )
+		.insertItem(5, &quot;插入電話號碼&quot;, 0, 4 )
+		.insertItem(6, &quot;插入傳真號碼&quot;, 0, 5 )
+		.insertSeparator(6)
+		.insertItem(7, &quot;套用個人資料&quot;, 0, 7 )
+		.setItemImage(7, Image2Graphic(getIconURL(&quot;applypersonal_16.png&quot;)), False)
+		.insertItem(8, &quot;套用偏好字型&quot;, 0, 8 )
+		.setItemImage(8, Image2Graphic(getIconURL(&quot;applyfonts_16.png&quot;)), False)
+		.insertSeparator(9)
+		.insertItem(9, &quot;偏好設定&quot;, 0, 10 )
+		.setItemImage(9, Image2Graphic(getIconURL(&quot;Preference_16.png&quot;)), False)
+		iChoice = .execute(oEvent.Source.Peer, oRectangle, _
+							com.sun.star.awt.PopupMenuDirection.EXECUTE_DEFAULT)
+		Select Case iChoice
+			Case 0	&apos; 沒有選擇
+				Exit Function
+			Case 1
+				insertPersonalInformation(&quot;機關名稱&quot;)
+			Case 2
+				insertPersonalInformation(&quot;機關地址&quot;)
+			Case 3
+				insertPersonalInformation(&quot;承辦人&quot;)
+			Case 4
+				insertPersonalInformation(&quot;電子信箱&quot;)
+			Case 5
+				insertPersonalInformation(&quot;電話&quot;)
+			Case 6
+				insertPersonalInformation(&quot;傳真&quot;)
+			Case 7
+				ReportAssistant.ApplyPersonal.Main
+			Case 8
+				ReportAssistant.ApplyPersonal.FontStyle
+			Case 9
+				ReportAssistant.Preference.Main
+		End Select	&apos; iChoice
+	End With	&apos; oPopup
+End Function
+
+&apos; 處理浮水印按鈕
+Function WaterMarkButton_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oPopup As Object
+	Dim oRectangle As New com.sun.star.awt.Rectangle
+	Dim iChoice As Integer
+
+	Set oPopup = createUnoService(&quot;com.sun.star.awt.PopupMenu&quot;)
+	
+	With oRectangle
+		.X = 0
+		.Y = 0
+		.Width = 0
+		.Height = oEvent.Source.Size.Height
+	End With	&apos;oRectangle
+	With oPopup
+		.insertItem(1, &quot;自訂浮水印&quot;, 0, 0 )
+		.setItemImage(1, Image2Graphic(getIconURL(&quot;watermark_16.png&quot;)), False)
+		.insertItem(2, &quot;移除浮水印&quot;, 0, 1 )
+		.setItemImage(2, Image2Graphic(getIconURL(&quot;removewatermark_16.png&quot;)), False)
+		iChoice = .execute(oEvent.Source.Peer, oRectangle, _
+							com.sun.star.awt.PopupMenuDirection.EXECUTE_DEFAULT)
+		Select Case iChoice
+			Case 0	&apos; 沒有選擇
+				Exit Function
+			Case 1
+				ReportAssistant.WaterMark.Main()
+			Case 2
+				ReportAssistant.WaterMark.remove()
+		End Select
+	End With	&apos; oPopup
+End Function
+
+&apos; 處理裝訂線按鈕
+Function BindingLineButton_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oPopup As Object
+	Dim oRectangle As New com.sun.star.awt.Rectangle
+	Dim iChoice As Integer
+
+	Set oPopup = createUnoService(&quot;com.sun.star.awt.PopupMenu&quot;)
+	
+	With oRectangle
+		.X = 0
+		.Y = 0
+		.Width = 0
+		.Height = oEvent.Source.Size.Height
+	End With	&apos;oRectangle
+	With oPopup
+		.insertItem(1, &quot;插入頁面左側&quot;, 0, 0 )
+		.setItemImage(1, Image2Graphic(getIconURL(&quot;bindingline-left_16.png&quot;)), False)
+		.insertItem(2, &quot;插入頁面右側&quot;, 0, 1 )
+		.setItemImage(2, Image2Graphic(getIconURL(&quot;bindingline-right_16.png&quot;)), False)
+		.insertItem(3, &quot;插入頁面頂端&quot;, 0, 2 )
+		.setItemImage(3, Image2Graphic(getIconURL(&quot;bindingline-top_16.png&quot;)), False)
+		.insertItem(4, &quot;插入頁面底部&quot;, 0, 3 )
+		.setItemImage(4, Image2Graphic(getIconURL(&quot;bindingline-bottom_16.png&quot;)), False)
+		.insertSeparator(4)
+		.insertItem(5, &quot;自訂裝訂線&quot;, 0, 5 )
+		.setItemImage(5, Image2Graphic(getIconURL(&quot;bindingline_16.png&quot;)), False)
+
+		iChoice = .execute(oEvent.Source.Peer, oRectangle, _
+							com.sun.star.awt.PopupMenuDirection.EXECUTE_DEFAULT)
+		Select Case iChoice
+			Case 0	&apos; 沒有選擇
+				Exit Function
+			Case 1
+				ReportAssistant.BindingLine.insertPosition(BindingLine_Position_PAGE_LEFT)
+			Case 2
+				ReportAssistant.BindingLine.insertPosition(BindingLine_Position_PAGE_RIGHT)
+			Case 3
+				ReportAssistant.BindingLine.insertPosition(BindingLine_Position_PAGE_TOP)
+			Case 4
+				ReportAssistant.BindingLine.insertPosition(BindingLine_Position_PAGE_BOTTOM)
+			Case 5
+				ReportAssistant.BindingLine.Main()
+		End Select	&apos; iChoice
+	End With	&apos; oPopup
+End Function
+
+Private Function SetSortedStyles(oListBox as Object, sStyleFamilie As String, Optional aStyleNames As Object)
+	Dim oStyles As Object
+	Dim oStyle As Object
+	Dim I As Long
+	Dim nCnt As Long
+	Dim sStyles(0,1)
+	Dim sNew()
+	Dim sName As String
+
+	Set oStyles = ThisComponent.StyleFamilies.getByName(sStyleFamilie)
+
+	nCnt = -1
+	For I = 0 To oStyles.Count - 1
+		oStyle = oStyles.getByIndex(I)
+		If (Not oStyle.Hidden And oStyle.isUserDefined()) Then
+			nCnt = nCnt + 1
+			ReDim Preserve sStyles(nCnt, 1)
+			sStyles(nCnt, 0) = oStyle.DisplayName
+			sStyles(nCnt, 1) = oStyle.Name
+		End If
+	Next I
+	sNew = Tools.Strings.BubbleSortList(sStyles)
+
+	With oListBox
+		.removeAllItems()
+		If (nCnt &gt;= 0) Then
+			For I = LBound(sNew) To UBound(sNew)
+				.insertItemText(I, sNew(I, 0))
+				.setItemData(I, sNew(I, 1))
+			Next I
+			I = UBound(sNew)
+		Else
+			I = -1
+		End If
+
+		If (Not IsMissing(aStyleNames)) Then
+			For Each sName In aStyleNames
+				On Local Error GoTo NoStyle
+				oStyle = oStyles.getByName(sName)
+				If (Not isNull(oStyle)) Then
+					I = I + 1
+					.insertItemText(I, oStyle.DisplayName)
+					.setItemData(I, oStyle.Name)
+				End If
+NoStyle:
+			Next sName
+		End If
+	End With	&apos; oListBox
+
+End Function
+
+Private _DefauleParagraph() As String
+Function ParagraphStylesButton_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+
+	Set oDialog = oEvent.Source.Context
+
+	_DefauleParagraph = Array(&quot;Text body&quot;, &quot;Title&quot;, _
+							&quot;Heading 1&quot;, &quot;Heading 2&quot;, &quot;Heading 3&quot;, &quot;Heading 4&quot;, &quot;Heading 5&quot;, _
+							&quot;Heading 6&quot;, &quot;Heading 7&quot;, &quot;Heading 8&quot;, &quot;Heading 9&quot;, &quot;Heading 10&quot;)
+
+	With oDialog.Model
+		If (.Step = 2) Then
+			Exit Function
+		End If
+		SetSortedStyles(oDialog.Model.ParagraphList, &quot;ParagraphStyles&quot;, _DefauleParagraph)
+		setParageaphButtonEnabled(oDialog, False)
+		.Step = 2
+	End With
+
+End Function
+
+Private Function setParageaphButtonEnabled(oDialog As Object, bSW As Boolean)
+	With oDialog.Model
+		.ApplyParagraph.Enabled = bSW
+		.ModifyParagraph.Enabled = bSW
+	End With
+End Function
+
+&apos; 段落式樣選擇改變
+Function ParagraphList_change(oEvent As com.sun.star.awt.ItemEvent)
+	Dim oDialog As Object
+
+	Set oDialog = oEvent.Source.Context
+	
+	setParageaphButtonEnabled(oDialog, True)
+
+End Function	&apos; ParagraphList_change
+
+&apos; 雙擊段落式樣名稱
+Function ParagraphList_doubleClick(oEvent As com.sun.star.awt.MouseEvent)
+	Dim oDialog As Object
+
+	Set oDialog = oEvent.Source.Context
+
+	With oEvent
+		If (.Buttons = 1 And .ClickCount &gt; 1 And .Source.SelectedItemPos &gt;= 0) Then
+			ChangeParagraphStyle(oDialog)
+		End If
+	End With
+	
+End Function
+
+&apos; 點擊套用式樣按鈕
+Function ApplyParagraph_click(oEvent As com.sun.star.awt.ActionEvent)
+
+	ChangeParagraphStyle(oEvent.Source.Context)
+
+End Function	&apos; ApplyParagraph_click
+
+&apos; 變更段落式樣
+Private Function ChangeParagraphStyle(oDialog As Object)
+	Dim oStyles As Object
+	Dim oStyle As Object
+	Dim nSelected As Integer
+	Dim sStyleName As String
+	Dim oViewCursor As Object
+	Dim oTextCursor As Object
+	Dim oEnum As Object
+
+	Set oStyles = ThisComponent.StyleFamilies.getByName(&quot;ParagraphStyles&quot;)
+
+	With oDialog.Model
+		nSelected = .ParagraphList.SelectedItems(0)
+		sStyleName = .ParagraphList.getItemData(nSelected)
+		Set oStyle = oStyles.getByName(sStyleName)
+
+		&apos; 變更游標所在段落的式樣(簡單地改成新段落名稱)
+		Set oViewCursor = ThisComponent.CurrentController.ViewCursor
+		oViewCursor.ParaStyleName = sStyleName
+
+		&apos; 若該段落有其他式樣的小節，則整段的字型及大小都不會改變
+		&apos; Ms Word 會變更，但 LibreOffice 不會，OpenOffice.org 沒測不知 XD
+
+		If (IsEmpty(oViewCursor.Cell)) Then
+			Set oTextCursor = ThisComponent.Text.createTextCursorByRange(oViewCursor)
+		Else	&apos; 游標位於儲存格內
+			Set oTextCursor = oViewCursor.Cell.createTextCursorByRange(oViewCursor)
+		End If
+
+		With oTextCursor
+			.gotoStartOfParagraph(False)	&apos; 跳到段落開頭
+			.gotoEndOfParagraph(True)		&apos; 標記整段
+			Set oEnum = .createEnumeration()
+			Dim oSecEnum As Object
+			Dim oSection As Object
+			Do While oEnum.hasMoreElements()
+				Set oSecEnum = oEnum.nextElement().createEnumeration()
+				Do While oSecEnum.hasMoreElements()
+					Set  oSection = oSecEnum.nextElement()
+					With oSection
+					If (.CharFontStyleName = &quot;&quot;) Then
+						.CharColor			= oStyle.CharColor
+				&apos;		.CharFontCharSet	= oStyle.CharFontCharSet
+				&apos;		.CharFontFamily		= oStyle.CharFontFamily
+						.CharFontName		= oStyle.CharFontName
+				&apos;		.CharFontPitch		= oStyle.CharFontPitch
+						.CharHeight			= oStyle.CharHeight
+				&apos;		.CharWeight			= oStyle.CharWeight
+				&apos;		.CharFontCharSetAsian	= oStyle.CharFontCharSetAsian
+				&apos;		.CharFontFamilyAsian	= oStyle.CharFontFamilyAsian
+						.CharFontNameAsian		= oStyle.CharFontNameAsian
+				&apos;		.CharFontPitchAsian		= oStyle.CharFontPitchAsian
+						.CharHeightAsian		= oStyle.CharHeightAsian
+				&apos;		.CharWeightAsian		= oStyle.CharWeightAsian
+						&apos;.CharFontCharSetComplex	= oStyle.CharFontCharSetComplex
+						&apos;.CharFontFamilyComplex	= oStyle.CharFontFamilyComplex
+						&apos;.CharFontNameComplex	= oStyle.CharFontNameComplex
+						&apos;.CharFontPitchComplex	= oStyle.CharFontPitchComplex
+						&apos;.CharHeightComplex		= oStyle.CharHeightComplex
+						&apos;.CharWeightComplex		= oStyle.CharWeightComplex
+					End If
+					End With
+				Loop	&apos; oSecEnum
+			Loop	&apos; oEnum
+			.gotoStartOfParagraph(False)
+		End With	&apos; TextCursor
+
+	End With	&apos; oDialog.Model
+End Function
+
+&apos; 修改段落式樣
+Function ModifyParagraph_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+	Dim oFrame As Object
+	Dim oDispatcher As Object
+	Dim args1(1) As New com.sun.star.beans.PropertyValue
+	Dim nSelected As Integer
+
+	Set oDialog = oEvent.Source.Context
+	Set oFrame = ThisComponent.CurrentController.Frame
+	Set oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+
+	With oEvent.Source.Context.Model
+		nSelected = .ParagraphList.SelectedItems(0)
+		args1(0).Name = &quot;Param&quot;
+		args1(0).Value = .ParagraphList.getItemData(nSelected)
+		args1(1).Name = &quot;Family&quot;
+		args1(1).Value = 2
+	End With
+
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:EditStyle&quot;, &quot;&quot;, 0, args1())
+	SetSortedStyles(oDialog.Model.ParagraphList, &quot;ParagraphStyles&quot;, _DefauleParagraph)
+	setParageaphButtonEnabled(oDialog, False)
+End Function
+
+Function ImportParagraph_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+	Dim oFrame As Object
+	Dim oDispatcher As Object
+	Dim args1(0) As New com.sun.star.beans.PropertyValue
+	
+	args1(0).Name = &quot;Flags&quot;
+	args1(0).Value = 1
+	
+	Set oDialog = oEvent.Source.Context
+	Set oFrame = ThisComponent.CurrentController.Frame
+	Set oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:LoadStyles&quot;, &quot;&quot;, 0, args1)
+	SetSortedStyles(oDialog.Model.ParagraphList, &quot;ParagraphStyles&quot;, _DefauleParagraph)
+	setParageaphButtonEnabled(oDialog, False)
+End Function
+
+Private Function setNumberingButtonEnabled(oDialog As Object, bSW As Boolean)
+	With oDialog.Model
+		.ApplyNumbering.Enabled = bSW
+		.ModifyNumbering.Enabled = bSW
+		If (Not bSW) Then
+			.NumberingPreview.Text = &quot;&quot;
+		End If
+	End With
+End Function
+
+&apos; 按下編號式樣按鈕
+Function NumberingStylesButton_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+
+	Set oDialog = oEvent.Source.Context
+
+	With oDialog.Model
+		If (.Step = 3) Then
+			Exit Function
+		End If
+		SetSortedStyles(oDialog.Model.NumberingList, &quot;NumberingStyles&quot;)
+		setNumberingButtonEnabled(oDialog, False)
+		.Step = 3
+	End With
+
+End Function
+
+Private Function MakeNumberingPreview(oDialog As Object)
+	Dim oStyles As Object
+	Dim oStyle As Object
+	Dim nSelected As Long
+	Dim sStyleName As String
+	Dim I As Long, J As Long
+	Dim oNumberingRules As Object
+	Dim aNumberingRules() As Object
+	Dim sPrefix As String
+	Dim sSuffix As String
+	Dim sNumberingChar As String
+	Dim sPreview As String
+
+	Set oStyles = ThisComponent.StyleFamilies.getByName(&quot;NumberingStyles&quot;)
+
+	With oDialog.Model
+		nSelected = .NumberingList.SelectedItems(0)
+		sStyleName = .NumberingList.getItemData(nSelected)
+		Set oStyle = oStyles.getByName(sStyleName)
+
+		Set oNumberingRules = oStyle.NumberingRules
+		With oNumberingRules
+			For I = 0 To .Count - 1
+				Set aNumberingRules = .getByIndex(I)
+				sPrefix = &quot;&quot;
+				sSuffix = &quot;&quot;
+				sNumberingChar = &quot;&quot;
+				For J = LBound(aNumberingRules) To UBound(aNumberingRules)
+					If (aNumberingRules(J).Name = &quot;Prefix&quot;) Then
+						sPrefix = aNumberingRules(J).Value
+					End If
+					If (aNumberingRules(J).Name = &quot;Suffix&quot;) Then
+						sSuffix = aNumberingRules(J).Value
+					End If
+					If (aNumberingRules(J).Name = &quot;NumberingType&quot;) Then
+						sNumberingChar = Mid(NUMBERING_LETTER, aNumberingRules(J).Value + 1 ,1)
+						If sNumberingChar = &quot;?&quot; Then
+							sNumberingChar = &quot;&quot;
+						end If
+					End If
+				Next J
+				sPreview = sPreview &amp; Space(I) &amp; sPrefix &amp; sNumberingChar &amp; sSuffix &amp; &quot; －－－－&quot; &amp; Chr(10)
+			Next I
+		End With	&apos; oStyle.NumberingRules
+		.NumberingPreview.Text = sPreview
+	End With	&apos; oDialog.Model
+	
+End Function
+
+&apos; 編號式樣選擇變更
+Function NumberingList_change(oEvent As com.sun.star.awt.ItemEvent)
+	Dim oDialog As Object
+
+	Set oDialog = oEvent.Source.Context
+
+	MakeNumberingPreview(oDialog)
+	setNumberingButtonEnabled(oDialog, True)
+
+End Function	&apos; NumberingList_change
+
+Private Function ChangeNumberingStyle(oDialog As Object)
+	Dim oStyles As Object
+	Dim nSelected As Integer
+	Dim sStyleName As String
+	Dim oViewCursor As Object
+
+	Set oStyles = ThisComponent.StyleFamilies.getByName(&quot;NumberingStyles&quot;)
+
+	With oDialog.Model
+		nSelected = .NumberingList.SelectedItems(0)
+		sStyleName = .NumberingList.getItemData(nSelected)
+		&apos; 變更游標所在編號式樣(簡單地改成新標號名稱)
+		Set oViewCursor = ThisComponent.CurrentController.ViewCursor
+		oViewCursor.NumberingStyleName = sStyleName
+	End With
+End Function
+
+
+&apos; 雙擊編號式樣名稱
+Function NumberingList_doubleClick(oEvent As com.sun.star.awt.MouseEvent)
+	Dim oDialog As Object
+
+	Set oDialog = oEvent.Source.Context
+
+	With oEvent
+		If (.Buttons = 1 And .ClickCount &gt; 1 And .Source.SelectedItemPos &gt;= 0) Then
+			ChangeNumberingStyle(oDialog)
+		End If
+	End With
+	
+End Function
+
+&apos; 點擊套用編號式樣按鈕
+Function ApplyNumbering_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+
+	Set oDialog = oEvent.Source.Context
+	ChangeNumberingStyle(oDialog)
+End Function
+
+&apos; 修改編號式樣
+Function ModifyNumbering_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+	Dim oFrame As Object
+	Dim oDispatcher As Object
+	Dim args1(1) As New com.sun.star.beans.PropertyValue
+	Dim nSelected As Integer
+
+	Set oDialog = oEvent.Source.Context
+	Set oFrame = ThisComponent.CurrentController.Frame
+	Set oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+
+	With oEvent.Source.Context.Model
+		nSelected = .NumberingList.SelectedItems(0)
+		args1(0).Name = &quot;Param&quot;
+		args1(0).Value = .NumberingList.getItemData(nSelected)
+		args1(1).Name = &quot;Family&quot;
+		args1(1).Value = 16
+	End With
+
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:EditStyle&quot;, &quot;&quot;, 0, args1())
+	SetSortedStyles(oDialog.Model.NumberingList, &quot;NumberingStyles&quot;)
+	setNumberingButtonEnabled(oDialog, False)
+End Function
+
+Function ImportNumbering_click(oEvent As com.sun.star.awt.ActionEvent)
+	Dim oDialog As Object
+	Dim oFrame As Object
+	Dim oDispatcher As Object
+	Dim args1(0) As New com.sun.star.beans.PropertyValue
+	
+	args1(0).Name = &quot;Flags&quot;
+	args1(0).Value = 8
+
+	Set oDialog = oEvent.Source.Context
+	Set oFrame = ThisComponent.CurrentController.Frame
+	Set oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:LoadStyles&quot;, &quot;&quot;, 0, args1)
+	SetSortedStyles(oDialog.Model.NumberingList, &quot;NumberingStyles&quot;)
+	setNumberingButtonEnabled(oDialog, False)
+End Function
+
+</script:module>

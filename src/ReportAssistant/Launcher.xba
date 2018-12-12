@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Launcher" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+Option Explicit
+
+Public Const LIB_NAME As String = &quot;ReportAssistant&quot;	&apos; 巨集套件名稱
+Public Const USE_RESOURCE_DB As Boolean = True	&apos; 是否使用資源檔保存資料
+
+Public Const DEBUG_MODE As Boolean = False		&apos; True:啟用除錯模式
+Public Const DEBUG_TOOL	As String = &quot;MRILib&quot;	&apos; or XrayTool, or Tools
+
+Public MY_DATA_DIR As String
+Public MY_RESOURCE_DB As String
+Public USER_WORK_DIR As String			&apos; 使用者工作目錄
+
+Private Const MODULE_NAME As Long = 0
+Private Const MACRO_NAME As Long = 1
+
+Sub Run(Optional ModuleName As String)
+	Dim sScriptUri As String
+	Dim sModuleMacro() As String
+	Dim sModuleName As String
+	Dim sMacroName As String
+	Dim oLib As Object
+
+	sModuleMacro() = Split(ModuleName, &quot;.&quot;)
+
+	If (isMissing(ModuleName) Or UBound(sModuleMacro) &lt; 0) Then
+		Exit Sub
+	End If
+
+	With Globalscope.BasicLibraries
+		&apos; 確認自己的 LIB_NAME 是否正確
+		If (.hasByName(LIB_NAME)) Then
+			Call _Initialize	&apos; 初始化系統環境
+			sModuleName = sModuleMacro(MODULE_NAME)
+			If (UBound(sModuleMacro) &gt; 0) Then
+				sMacroName = sModuleMacro(MACRO_NAME)
+			Else
+				sMacroName = &quot;Main&quot;
+			End If
+
+			sScriptUri = &quot;vnd.sun.star.script:&quot; &amp; LIB_NAME
+			oLib = .getByName(LIB_NAME)
+			&apos; 檢查 ModuleName 是否正確
+			If (oLib.hasByName(sModuleName)) Then
+				sScriptUri = sScriptUri &amp; &quot;.&quot; &amp; sModuleName &amp; &quot;.&quot; &amp; sMacroName &amp; _
+							&quot;?language=Basic&amp;location=application&quot;
+			Else
+				sScriptUri = &quot;&quot;
+				MsgBox(&quot;傳來的 Module 名稱不存在 → &quot; &amp; sModuleName, MB_ICONSTOP, &quot;模組名稱錯誤&quot;)
+			End If
+		Else
+			MsgBox(&quot;Library 名稱錯誤 → &quot; &amp; LIB_NAME, MB_ICONSTOP, &quot;名稱錯誤&quot;)
+		End If
+	End With
+
+	If (sScriptUri &lt;&gt; &quot;&quot;) Then
+		&apos;On Error GoTo ErrorHandler
+		With GetDefaultContext.getValueByName( _
+					&quot;/singletons/com.sun.star.script.provider.theMasterScriptProviderFactory&quot;)
+			.createScriptProvider(&quot;&quot;).getScript(sScriptUri).invoke(array(), array(), array())
+		End With
+	End If
+	Exit Sub
+
+ErrorHandler:
+	MsgBox(&quot;模組 &quot; &amp; ModuleName &amp; &quot; 必須有名為 Main() 的程序或函數&quot;, MB_ICONSTOP, &quot;錯誤&quot;)
+End Sub
+
+Private _HasInitialized	As Boolean				&apos; 是否已經初始過了
+Sub _Initialize()
+
+	If (_HasInitialized) Then
+		Exit Sub
+	End If
+
+	With Globalscope.BasicLibraries
+		If (Not .isLibraryLoaded(&quot;Tools&quot;)) Then
+			.LoadLibrary(&quot;Tools&quot;)
+		End If
+
+		If (DEBUG_MODE) Then
+			If (.hasByName(DEBUG_TOOL)) Then
+				If (Not .isLibraryLoaded(DEBUG_TOOL)) Then
+					.LoadLibrary(DEBUG_TOOL)
+				End If
+			Else
+				&apos;MsgBox &quot;啟用除錯模式，請先安裝 &quot; &amp; DEBUG_TOOL 
+			End If
+		End If
+	End With
+
+	Dim oPathSetting As Object
+	oPathSetting = CreateUnoService(&quot;com.sun.star.util.PathSubstitution&quot;)
+	USER_WORK_DIR = oPathSetting.substituteVariables(&quot;$(work)&quot;, True)
+	MY_DATA_DIR = oPathSetting.substituteVariables(&quot;$(user)/OSSII/&quot; &amp; LIB_NAME, True)
+	MY_RESOURCE_DB = MY_DATA_DIR &amp; &quot;/&quot; &amp; LIB_NAME &amp; &quot;.rdb&quot;
+	If (Not FileExists(MY_DATA_DIR)) Then
+		Tools.UCB.createFolder(MY_DATA_DIR)
+	End If
+
+	_HasInitialized = True
+
+End Sub
+
+Function Debug(xObj)
+	If (DEBUG_MODE) Then
+		Select Case DEBUG_TOOL
+			Case &quot;XrayTool&quot;
+				Xray xObj
+			Case &quot;MRILib&quot;
+				Mri xObj
+			Case Else
+				TOOLS.Debug.WritedbgInfo(xObj)
+		End Select
+	End If
+End Function
+
+Function loadDialog(sDialogName As String) As Object
+	Dim oLib as Object
+	Dim oLibDialog as Object
+	Dim oRuntimeDialog as Object
+
+	DialogLibraries.LoadLibrary(LIB_NAME)
+	oLib = DialogLibraries.GetByName(LIB_NAME)
+	If (oLib.hasByName(sDialogName)) Then
+		oLibDialog = oLib.GetByName(sDialogName)
+		oRuntimeDialog = CreateUnoDialog(oLibDialog)
+		loadDialog = oRuntimeDialog
+	Else
+		MsgBox(&quot;沒有 &quot; &amp; sDialogName &amp; &quot; 這個 Dialog&quot;)
+		loadDialog = Nothing
+	End If
+End Function
+
+&apos; 取得字體列表
+Function getFontList()
+	Dim oFonts As Object
+	Dim oFontList As New Collection
+	Dim I As Long
+	Dim sRetList() As String
+	Dim sSaveName As String
+	Dim sFont As String
+
+	Set oFonts = ThisComponent.CurrentController.getFrame().getContainerWindow().getFontDescriptors()
+	For I = LBound(oFonts) To UBound(oFonts)
+		If (StrComp(oFonts(I).Name, sSaveName) &lt;&gt; 0) Then
+			oFontList.add Item:=oFonts(I).Name
+			sSaveName = oFonts(I).Name
+		End If
+	Next I
+
+	ReDim sRetList(oFontList.count - 1)
+	I = 0
+	For Each sFont In oFontList
+		sRetList(I) = sFont
+		I = I + 1
+	Next sFont
+	
+	Erase oFontList
+
+	Tools.Strings.BubbleSortList(sRetList)
+
+	getFontList = sRetList
+End Function
+
+Function getResource(sResourceKey As String) As Object
+	Dim oResDB As Object
+
+	Set oResDB = New ResourceDBClass
+	With oResDB
+		.URL = MY_RESOURCE_DB
+		.openDB()
+		Set getResource = .getResource(sResourceKey)
+		.closeDB()
+	End With
+
+End Function
+
+Function updateResource(oResource As Object)
+	Dim oResDB As Object
+
+	Set oResDB = New ResourceDBClass
+	With oResDB
+		.URL = MY_RESOURCE_DB
+		.openDB()
+		.updateResource(oResource)
+		.closeDB()
+	End With
+
+End Function
+
+Function FolderPicker(Optional Title As String, _
+					  Optional Description As String, _
+					  Optional DefaultPath As String) As String
+	Dim oFolderDialog As Object
+
+	Set oFolderDialog = createUnoService(&quot;com.sun.star.ui.dialogs.FolderPicker&quot;)
+	If (IsMissing(Title)) Then
+		Title = &quot;請選擇目錄&quot;
+	End If
+
+	If (IsMissing(Description)) Then
+		Description = &quot;&quot;
+	End If
+
+	If (IsMissing(DefaultPath)) Then
+		DefaultPath = &quot;&quot;
+	End If
+
+	With oFolderDialog
+		.setTitle(Title)
+		.setDescription(Description)
+		.setDisplayDirectory(DefaultPath)
+		If (.execute() = 1) Then
+			FolderPicker = .Directory
+		Else
+			FolderPicker = &quot;&quot;
+		End If
+	End With
+
+End Function
+
+Private LIBRARY_ROOT_PATH As String
+Function getLibraryRootURL() As String
+	If (LIBRARY_ROOT_PATH = &quot;&quot;) Then
+		LIBRARY_ROOT_PATH = Replace(Globalscope.BasicLibraries.getLibraryLinkURL(LIB_NAME), _
+									 &quot;/&quot; &amp; LIB_NAME &amp; &quot;/script.xlb&quot;, &quot;&quot;)
+	End If
+
+	getLibraryRootURL = LIBRARY_ROOT_PATH
+
+End Function
+
+Function getIconURL(sIconFileName As String) As String
+	Dim sURL As String
+	Dim sLibURL As String
+
+	sLibURL = getLibraryRootURL()
+	sURL =  sLibURL &amp; &quot;/icons/&quot; &amp; sIconFileName
+	If (FileExists(sURL)) Then
+		getIconURL = sURL
+	Else
+		getIconURL = sLibURL &amp; &quot;/icons/problem-icon.png&quot;
+	End If
+End Function
+
+Function Image2Graphic(sImageURL As String) As Object
+	Dim oGraphic As Object
+	Dim aMediaProp(0) As New com.sun.star.beans.PropertyValue
+	Dim oImage As Object
+
+	Set oGraphic = createUnoService(&quot;com.sun.star.graphic.GraphicProvider&quot;)
+
+	aMediaProp(0).Name = &quot;URL&quot;
+	aMediaProp(0).Value = sImageURL
+	Image2Graphic = oGraphic.queryGraphic(aMediaProp())
+
+End Function
+
+Function insertAnyString(sString As String)
+	Dim oFrame As Object
+	Dim oDispatcher As Object
+	oFrame = ThisComponent.CurrentController.Frame
+	oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+
+	Dim args1(4) as new com.sun.star.beans.PropertyValue
+	args1(0).Name = &quot;Font.StyleName&quot;
+	args1(0).Value = &quot;&quot;
+	args1(1).Name = &quot;Font.Pitch&quot;
+	args1(1).Value = 2
+	args1(2).Name = &quot;Font.CharSet&quot;
+	args1(2).Value = -1
+	args1(3).Name = &quot;Font.Family&quot;
+	args1(3).Value = 0
+	args1(4).Name = &quot;Symbols&quot;
+	args1(4).Value = sString
+
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:InsertSymbol&quot;, &quot;&quot;, 0, args1())
+End Function
+</script:module>

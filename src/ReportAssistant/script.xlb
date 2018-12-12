@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE library:library PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "library.dtd">
+<library:library xmlns:library="http://openoffice.org/2000/library" library:name="ReportAssistant" library:readonly="false" library:passwordprotected="false">
+ <library:element library:name="ResourceDBClass"/>
+ <library:element library:name="RA_Tools"/>
+ <library:element library:name="NonModelDialog"/>
+ <library:element library:name="RA_SelectionChangeListener"/>
+ <library:element library:name="Assistant"/>
+ <library:element library:name="Launcher"/>
+ <library:element library:name="BindingLineClass"/>
+ <library:element library:name="BindingLineConstant"/>
+ <library:element library:name="BindingLine"/>
+ <library:element library:name="WaterMarkClass"/>
+ <library:element library:name="WaterMark"/>
+ <library:element library:name="Preference"/>
+ <library:element library:name="ResourceClass"/>
+ <library:element library:name="SaveAsTemplate"/>
+ <library:element library:name="OpenAsTemplate"/>
+ <library:element library:name="ApplyPersonal"/>
+ <library:element library:name="FillInExample"/>
+ <library:element library:name="ToolbarClass"/>
+ <library:element library:name="DesignTools"/>
+</library:library>

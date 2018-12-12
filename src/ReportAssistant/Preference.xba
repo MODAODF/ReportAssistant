@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Preference" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+Option Explicit
+
+Dim oPreferenceDialog As Object
+
+Private Const Preference_Personal_Primary_Key = &quot;/Preference/Personal&quot;	&apos; 個人資訊
+Private Const Preference_FontFamily_Primary_Key = &quot;/Preference/Font&quot;	&apos; 偏好字型
+Private Const Preference_Path_Primary_Key = &quot;/Preference/Path&quot;	&apos; 目錄管理
+
+Sub Main
+	Dim aFontList() As String
+	Dim oPersonal As Object
+	Dim oFontFamily As Object
+	Dim oPathSub As Object
+	Dim sWorkDir	As String
+	Dim oPath		As Object
+
+	sWorkDir = USER_WORK_DIR &amp; &quot;/報表範本&quot;
+	If (Not FileExists(sWorkDir)) Then
+		Tools.UCB.createFolder(sWorkDir)
+	End If
+
+	Set oPreferenceDialog = loadDialog(&quot;PreferenceDialog&quot;)
+	Set oPersonal = getResource(Preference_Personal_Primary_Key)
+	Set oFontFamily = getResource(Preference_FontFamily_Primary_Key)
+	Set oPath = getResource(Preference_Path_Primary_Key)
+
+	If (oPath.getValue(&quot;範本目錄&quot;) = &quot;&quot;) Then
+		oPath.setValue(&quot;範本目錄&quot;, ConvertFromURL(sWorkDir))
+	End If
+	
+	aFontList = getFontList()
+
+	With oPreferenceDialog
+		With .Model
+			.Step = 1		&apos; 切到個人設定頁
+			.PersonalButton.ImageUrl = getIconURL(&quot;personal-information-icon.png&quot;)
+			.FontButton.ImageUrl = getIconURL(&quot;font-icon.png&quot;)
+			.PathButton.ImageUrl = getIconURL(&quot;folder-icon.png&quot;)
+			.DeptName.Text = oPersonal.getValue(&quot;機關名稱&quot;)
+			.DeptAddress.Text = oPersonal.getValue(&quot;機關地址&quot;)
+			.Contact.Text = oPersonal.getValue(&quot;承辦人&quot;)
+			.Email.Text = oPersonal.getValue(&quot;電子信箱&quot;)
+			.TelNo.Text = oPersonal.getValue(&quot;電話&quot;)
+			.FaxNo.Text = oPersonal.getValue(&quot;傳真&quot;)
+			.FontFamilyAsian.StringItemList = aFontList()
+			.FontFamilyEnglish.StringItemList = aFontList()
+			.FontFamilyAsian.Text = oFontFamily.getValue(&quot;中文字型&quot;)
+			.FontFamilyEnglish.Text = oFontFamily.getValue(&quot;英文字型&quot;)
+			.TemplatePath.Text = oPath.getValue(&quot;範本目錄&quot;)
+		End With
+
+		If (.execute() = 1) Then
+			With .Model
+				oPersonal.setValue(&quot;機關名稱&quot;, .DeptName.Text)
+				oPersonal.setValue(&quot;機關地址&quot;, .DeptAddress.Text)
+				oPersonal.setValue(&quot;承辦人&quot;, .Contact.Text)
+				oPersonal.setValue(&quot;電子信箱&quot;, .Email.Text)
+				oPersonal.setValue(&quot;電話&quot;, .TelNo.Text)
+				oPersonal.setValue(&quot;傳真&quot;, .FaxNo.Text)
+				oFontFamily.setValue(&quot;中文字型&quot;, .FontFamilyAsian.Text)
+				oFontFamily.setValue(&quot;英文字型&quot;, .FontFamilyEnglish.Text)
+				oPath.setValue(&quot;範本目錄&quot;, .TemplatePath.Text)
+			End With
+
+			updateResource(oPersonal)
+			updateResource(oFontFamily)
+			updateResource(oPath)
+			oPersonal.dispose()
+			oFontFamily.dispose()
+			oPath.dispose()
+		End If
+		.dispose()
+	End With
+End Sub
+
+Function Item_change(oEvent As com.sun.star.awt.ActionEvent)
+
+	Dim nStep As Long
+
+	nStep = 1
+	With oEvent.Source.Model
+		Select Case .Name
+			Case &quot;PersonalButton&quot;	&apos; 個人資訊
+				nStep = 1
+			Case &quot;FontButton&quot;		&apos; 偏好字型
+				nStep = 2
+			Case &quot;PathButton&quot;		&apos; 目錄管理
+				nStep = 3
+		End Select
+	End With
+	oEvent.Source.getContext().Model.Step = nStep
+	
+End Function
+
+Function TemplatePathButton_click(oEvent As Object)
+	Dim sFolder As String
+	sFolder = FolderPicker(&quot;請選擇目錄&quot;, &quot;請選擇存放報表範本的目錄：&quot;, _
+							ConvertToURL(oPreferenceDialog.Model.TemplatePath.Text))
+	If (sFolder &lt;&gt; &quot;&quot;) Then
+		oPreferenceDialog.Model.TemplatePath.Text = ConvertFromURL(sFolder)
+	End If
+End Function
+
+&apos; 功能表呼叫
+Function insertDeptName()
+	insertPersonalInformation(&quot;機關名稱&quot;)
+End Function
+Function insertDeptAddress()
+	insertPersonalInformation(&quot;機關地址&quot;)
+End Function
+Function insertContact()
+	insertPersonalInformation(&quot;承辦人&quot;)
+End Function
+Function insertEmail()
+	insertPersonalInformation(&quot;電子信箱&quot;)
+End Function
+Function insertTelNo()
+	insertPersonalInformation(&quot;電話&quot;)
+End Function
+Function insertFaxNo()
+	insertPersonalInformation(&quot;傳真&quot;)
+End Function
+
+Function insertPersonalInformation(sString As String)
+	Dim sData As String
+	Dim oViewCursor As Object
+	Dim oLocText as Object
+	Dim oLocCursor as Object
+
+	sData = getResource(Preference_Personal_Primary_Key &amp; &quot;/&quot; &amp; sString).Value
+	If (Tools.Misc.GetDocumentType(ThisComponent) &lt;&gt; &quot;swriter&quot;) Then
+		insertAnyString(sData)
+		Exit Function
+	End If
+
+	Set oViewCursor = ThisComponent.CurrentController.getViewCursor()
+
+	If (Not IsEmpty(oViewCursor.Cell)) Then
+		Set oLocText = oViewCursor.Cell
+	ElseIf (Not IsEmpty(oViewCursor.Text)) Then
+		Set oLocText = oViewCursor.Text
+	Else
+		Exit Function
+	End If
+
+	oLocCursor = oLocText.createTextCursorByRange(oViewCursor)
+	oLocText.insertString(oLocCursor, sData, False)	
+End Function
+</script:module>

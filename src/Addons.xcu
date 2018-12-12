@@ -1,0 +1,432 @@
+﻿<?xml version='1.0' encoding='UTF-8'?>
+<oor:component-data 
+ xmlns:oor="http://openoffice.org/2001/registry"
+ xmlns:xs="http://www.w3.org/2001/XMLSchema"
+ oor:name="Addons"
+ oor:package="org.openoffice.Office">
+	<node oor:name="AddonUI">
+		<node oor:name="OfficeMenuBar">
+			<node oor:name="ReportAssistant.OfficeMenuBar" oor:op="replace">
+				<prop oor:name="Context" oor:type="xs:string">
+					<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+				</prop>
+				<prop oor:name="Title" oor:type="xs:string">
+					<value>範本工具</value>
+				</prop>
+				<node oor:name="Submenu">
+				<node oor:name="m001" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>macro:///ReportAssistant.Launcher.Run("Assistant")</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>範本設計精靈</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+					<prop oor:name="ImageIdentifier" oor:type="xs:string">
+						<value>%origin%/icons/reportassistant</value>
+					</prop>
+				</node>
+				<node oor:name="m003" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>private:separator</value>
+					</prop>
+				</node>
+				<node oor:name="m004" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>裝訂線</value>
+					</prop>
+					<prop oor:name="ImageIdentifier" oor:type="xs:string">
+						<value>%origin%/icons/bindingline</value>
+					</prop>
+					<node oor:name="Submenu">
+					<node oor:name="m001" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("BindingLine")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>自訂裝訂線</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/bindingline</value>
+						</prop>
+					</node>
+					<node oor:name="m002" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("BindingLine.insertLeft")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入頁面左側</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/bindingline-left</value>
+						</prop>
+					</node>
+					<node oor:name="m003" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("BindingLine.insertRight")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入頁面右側</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/bindingline-right</value>
+						</prop>
+					</node>
+					<node oor:name="m004" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("BindingLine.insertTop")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入頁面上方</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/bindingline-top</value>
+						</prop>
+					</node>
+					<node oor:name="m005" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("BindingLine.insertBottom")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入頁面底部</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/bindingline-bottom</value>
+						</prop>
+					</node>
+					</node>
+				</node>
+				<node oor:name="m005" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>浮水印</value>
+					</prop>
+					<prop oor:name="ImageIdentifier" oor:type="xs:string">
+						<value>%origin%/icons/watermark</value>
+					</prop>
+					<node oor:name="Submenu">
+					<node oor:name="m001" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("WaterMark")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>自訂浮水印</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/watermark</value>
+						</prop>
+					</node>
+					<node oor:name="m002" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("WaterMark.remove")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>移除浮水印</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/removewatermark</value>
+						</prop>
+					</node>
+					</node>
+				</node>
+				<node oor:name="m006" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>偏好設定</value>
+					</prop>
+					<prop oor:name="ImageIdentifier" oor:type="xs:string">
+						<value>%origin%/icons/Preference</value>
+					</prop>
+					<node oor:name="Submenu">
+					<node oor:name="m001" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("Preference")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>自訂偏好設定</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/Preference</value>
+						</prop>
+					</node>
+					<node oor:name="m002" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("ApplyPersonal")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>套用個人資料</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/applypersonal</value>
+						</prop>
+					</node>
+					<node oor:name="m003" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("ApplyPersonal.FontStyle")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>套用偏好字型</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value>%origin%/icons/applyfonts</value>
+						</prop>
+					</node>
+					<node oor:name="m004" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>private:separator</value>
+						</prop>
+					</node>
+					<node oor:name="m005" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("Preference.insertDeptName")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入機關名稱</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value></value>
+						</prop>
+					</node>
+					<node oor:name="m006" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("Preference.insertDeptAddress")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入機關地址</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value></value>
+						</prop>
+					</node>
+					<node oor:name="m007" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("Preference.insertContact")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入承辦人姓名</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value></value>
+						</prop>
+					</node>
+					<node oor:name="m008" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("Preference.insertEmail")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入電子信箱</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value></value>
+						</prop>
+					</node>
+					<node oor:name="m009" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("Preference.insertTelNo")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入電話</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value></value>
+						</prop>
+					</node>
+					<node oor:name="m010" oor:op="replace">
+						<prop oor:name="Context" oor:type="xs:string">
+							<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+						</prop>
+						<prop oor:name="URL" oor:type="xs:string">
+							<value>macro:///ReportAssistant.Launcher.Run("Preference.insertFaxNo")</value>
+						</prop>
+						<prop oor:name="Title" oor:type="xs:string">
+							<value>插入傳真</value>
+						</prop>
+						<prop oor:name="Target" oor:type="xs:string">
+							<value>_self</value>
+						</prop>
+						<prop oor:name="ImageIdentifier" oor:type="xs:string">
+							<value></value>
+						</prop>
+					</node>
+					</node>
+				</node>
+				<node oor:name="m007" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>private:separator</value>
+					</prop>
+				</node>
+				<node oor:name="m008" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>macro:///ReportAssistant.Launcher.Run("OpenAsTemplate")</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>開啟報表範本</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+					<prop oor:name="ImageIdentifier" oor:type="xs:string">
+						<value>%origin%/icons/opentemplate</value>
+					</prop>
+				</node>
+				<node oor:name="m009" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument,com.sun.star.sheet.SpreadsheetDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>macro:///ReportAssistant.Launcher.Run("SaveAsTemplate")</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>存成報表範本</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+					<prop oor:name="ImageIdentifier" oor:type="xs:string">
+						<value>%origin%/icons/saveastemplate</value>
+					</prop>
+				</node>
+				<node oor:name="m010" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>private:separator</value>
+					</prop>
+				</node>
+				<node oor:name="m011" oor:op="replace">
+					<prop oor:name="Context" oor:type="xs:string">
+						<value>com.sun.star.text.TextDocument</value>
+					</prop>
+					<prop oor:name="URL" oor:type="xs:string">
+						<value>macro:///ReportAssistant.Launcher.Run("FillInExample")</value>
+					</prop>
+					<prop oor:name="Title" oor:type="xs:string">
+						<value>匯出填寫範例</value>
+					</prop>
+					<prop oor:name="Target" oor:type="xs:string">
+						<value>_self</value>
+					</prop>
+					<prop oor:name="ImageIdentifier" oor:type="xs:string">
+						<value>%origin%/icons/exportto</value>
+					</prop>
+				</node>
+				</node>
+			</node>
+		</node>
+	</node>
+</oor:component-data>

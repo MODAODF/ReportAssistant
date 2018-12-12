@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="RA_SelectionChangeListener" script:language="StarBasic">REM  *****  BASIC  *****
+Option Explicit
+
+Global oSelectionChangeListener As Object
+
+Private nTicks As Long	&apos; SelectionChange 會快速送好幾次相同事件，只好紀錄間隔
+
+Function RA_registerSelectionChenge(oDoc As Object)
+	oSelectionChangeListener = CreateUnoListener(&quot;RA_SEL_&quot;, &quot;com.sun.star.view.XSelectionChangeListener&quot;)
+	oDoc.getCurrentController().addSelectionChangeListener(oSelectionChangeListener)
+	nTicks = GetSystemTicks()
+End Function
+
+Function RA_unRegisterSelectionChenge(oDoc As Object)
+	oDoc.getCurrentController().removeSelectionChangeListener(oSelectionChangeListener)
+End Function
+
+Function RA_SEL_disposing(oEvent As Object)
+	&apos;do nothing
+End Function
+
+Function RA_SEL_selectionChanged(Optional oEvent As com.sun.star.lang.EventObject)
+	Dim oSelection As Object
+	Dim nSelectCount As Long
+	Dim oTextRange As Object
+	Dim oField As Object
+	Dim bGot As Boolean : bGot = False
+	Dim nNow As Long, nDiff As Long
+
+	nNow = GetSystemTicks()
+	nDiff = nNow - nTicks
+	nTicks = nNow
+
+	If (nDiff &lt; 200) Then
+		Exit Function
+	End If
+
+	&apos; 被標記的範圍
+	If (IsMissing(oEvent)) Then
+		Set oSelection = ThisComponent.getCurrentSelection()
+	Else
+		Set oSelection = oEvent.Source.getSelection()
+	End If
+
+	If (IsNull(oSelection) OR IsEmpty(oSelection)) Then
+		Ra_FieldSelect()
+		Exit Function
+	End If
+
+	&apos; 一般文字選取(writer)
+	If (oSelection.supportsService(&quot;com.sun.star.text.TextRanges&quot;)) Then
+		If (Not analyzeTextRanges(oSelection)) Then
+			Ra_FieldSelect()
+		End If
+	&apos; 選取表格儲存格(writer)
+	ElseIf (oSelection.supportsService(&quot;com.sun.star.text.TextTableCursor&quot;)) Then
+		RA_FieldSelect()
+		RA_SetDetailArea(True)
+		Exit Function
+	&apos; 單一儲存格(calc)
+	ElseIf (oSelection.supportsService(&quot;com.sun.star.sheet.SheetCell&quot;)) Then
+		syncFormatList(oSelection)
+		If (Not analyzeSheetCell(oSelection)) Then
+			Ra_FieldSelect()
+		End If
+	&apos; 儲存格區段(calc)
+	ElseIf (oSelection.supportsService(&quot;com.sun.star.sheet.SheetCellRange&quot;)) Then
+		RA_FieldSelect()
+		RA_SetDetailArea(True)
+		Exit Function
+	Else
+		&apos;msgbox &quot;未知的選取型態 : &quot; &amp; Chr(10) &amp; _
+		&apos;		join(oSelection.SupportedServiceNames, Chr(10))
+		Ra_FieldSelect()
+	End If
+
+End Function
+
+Function analyzeTextRanges(oSelection As Object) As Boolean
+	Dim oTextRange As Object
+	Dim oText As Object
+	Dim oCur As Object
+	Dim oField As Object
+	Dim bGot As Boolean
+
+	analyzeTextRanges = False
+
+	With oSelection
+		&apos; 不理會多重標記
+		If (.getCount() &lt;&gt; 1) Then Exit Function
+
+		oTextRange = .getByIndex(0) &apos; 取得選取區域
+		&apos; 沒有標記到欄位就不理會
+		If (IsEmpty(oTextRange.TextField)) Then Exit Function
+
+		oField = oTextRange.TextField
+		oText = oTextRange.getText()
+		oCur = oText.CreateTextCursorByRange(oTextRange)
+		&apos; 沒有標記到任何東西
+		If (oCur.IsCollapsed()) Then Exit Function
+
+		&apos; 確認是否報表欄位(佔位項，且Hint前五碼為 &quot;Type:&quot;)
+		If (oField.supportsService(&quot;com.sun.star.text.TextField.JumpEdit&quot;)) Then
+			If (Left(oField.Hint,5) &lt;&gt; &quot;Type:&quot;) Then
+				Exit Function
+			End If
+
+			&apos; 是否是唯一標記的欄位
+			If (oField.getPresentation(False) &lt;&gt; oCur.getString()) Then
+				Exit Function
+			End If
+			RA_FieldSelect(oField)
+		ElseIf (oField.supportsService(&quot;com.sun.star.text.TextField.Annotation&quot;)) Then
+			&apos;msgbox &quot;Content : &quot; &amp; oField.Content &amp; Chr(10) &amp; _
+			&apos;		&quot;Author : &quot; &amp; oField.Author
+			Exit Function
+		Else
+			&apos;msgbox &quot;未知的欄位型態 : &quot; &amp; Chr(10) &amp; _
+			&apos;	join(oField.SupportedServiceNames, Chr(10))
+			Exit Function
+		End If
+		
+	End With
+
+	analyzeTextRanges = True
+
+End Function
+
+Function analyzeSheetCell(oSelection As Object) As Boolean
+	Dim oTextFields As Object
+
+	analyzeSheetCell = False
+
+	oTextFields = oSelection.getTextFields()
+	If (oTextFields.Count = 0) Then
+		Exit Function
+	End If
+
+	RA_FieldSelect(oTextFields)
+
+	analyzeSheetCell = True
+End Function
+
+</script:module>

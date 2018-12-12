@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="BindingLineConstant" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+
+&apos; 裝訂線位於頁面的位置
+Global Const BindingLine_Position_PAGE_LEFT		= &quot;L&quot;	&apos; 頁的左側
+Global Const BindingLine_Position_PAGE_RIGHT	= &quot;R&quot;	&apos; 頁的右側
+Global Const BindingLine_Position_PAGE_TOP		= &quot;T&quot;	&apos; 頂端
+Global Const BindingLine_Position_PAGE_BOTTOM	= &quot;B&quot;	&apos; 底部
+
+&apos; 裝訂線插入頁面
+Global Const BindingLine_Draw_FIRST_PAGE	= 1		&apos; 第一頁
+Global Const BindingLine_Draw_CURRENT_PAGE	= 2		&apos; 游標所在頁
+Global Const BindingLine_Draw_ALL_PAGES		= 3		&apos; 每一頁
+</script:module>

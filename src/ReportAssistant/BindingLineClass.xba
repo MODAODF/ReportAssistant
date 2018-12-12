@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="BindingLineClass" script:language="StarBasic" script:moduleType="normal">&apos;==================================================
+&apos; 裝訂線繪製物件
+&apos; Class Name : BindingLineClass
+&apos; Propertys :
+&apos;				String :	顯示在線上的字串 
+&apos;				FontName :	字型名稱
+&apos;				FontSize :	字體大小 (pt)
+&apos;				Color :		RGB 顏色
+&apos;				Position :	在頁面的位置
+&apos;				Boundary :	邊距 (公分)
+&apos;				DrawType :	插入頁面方式
+&apos;
+&apos; Methods:
+&apos;				go() :	開始繪製
+&apos;
+&apos; 作者 : 鄧佳民
+&apos; 最後修改時間 : 2018/7/12 9:05
+&apos;==================================================
+
+Option Compatible
+Option ClassModule
+
+Option Explicit
+
+&apos; com.sun.star.text.HoriOrientation
+&apos; http://www.openoffice.org/api/docs/common/ref/com/sun/star/text/HoriOrientation.html
+&apos; NONE = 0
+&apos; RIGHT = 1
+&apos; CENTER = 2
+&apos; LEFT = 3
+&apos; INSIDE = 4
+&apos; OUTSIDE = 5
+&apos; FULL = 6
+&apos; LEFT_AND_WIDTH = 7
+
+&apos; com.sun.star.text.VertOrientation
+&apos; http://www.openoffice.org/api/docs/common/ref/com/sun/star/text/VertOrientation.html
+&apos; NONE = 0
+&apos; TOP = 1
+&apos; CENTER = 2
+&apos; BOTTOM = 3
+&apos; CHAR_TOP = 4
+&apos; CHAR_CENTER = 5
+&apos; CHAR_BOTTOM = 6
+&apos; LINE_TOP = 7
+&apos; LINE_CENTER = 8
+&apos; LINE_BOTTOM = 9
+
+
+&apos; com.sun.star.text.RelOrientation
+&apos; https://www.openoffice.org/api/docs/common/ref/com/sun/star/text/RelOrientation.html
+&apos; FRAME = 0
+&apos; PRINT_AREA = 1
+&apos; CHAR = 2
+&apos; PAGE_LEFT = 3
+&apos; PAGE_RIGHT = 4
+&apos; FRAME_LEFT = 5
+&apos; FRAME_RIGHT = 6
+&apos; PAGE_FRAME = 7
+&apos; PAGE_PRINT_AREA = 8
+&apos; TEXT_LINE = 9
+
+Private Const BINGINGLINE_NAME As String = &quot;OSSIIBindingLine&quot;
+
+&apos; 單位未標明的話，一律是公分
+Private _oDoc As Object
+Private _oDrawPage As Object
+Private _oViewCursor As Object
+Private _oPageStyle As Object
+
+Private _sString As String	&apos; 顯示在線上的字串
+Private _sFontName As String	&apos; 字體名稱
+Private _nFontSize As Double	&apos; 字體大小
+Private _nColor As Long	&apos; 字和線的顏色
+Private _sPosition As String	&apos; &quot;L&quot;:左, &quot;R&quot;:右, &quot;T&quot;:上, &quot;B&quot;:下
+Private _nBoundary As Long	&apos; 和邊界的距離
+Private _nDrawPageType As Long
+
+&apos; -----------------------------------------------------------------------------------------------------------------------
+&apos; CONSTRUCTORS / DESTRUCTORS						        														---
+&apos; -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Initialize()
+
+	Set _oDoc = ThisComponent
+	If ( Not _oDoc.SupportsService(&quot;com.sun.star.text.TextDocument&quot;)) Then
+		Msgbox(&quot;裝訂線只提供 Writer 使用&quot;, MB_ICONSTOP)
+		Exit Sub
+	End If
+
+	Set _oDrawPage = _oDoc.getDrawPage()
+	Set _oViewCursor = _oDoc.CurrentController.getViewCursor()
+	Set _oPageStyle = _oDoc.StyleFamilies.getByName(&quot;PageStyles&quot;).getByName(_oViewCursor.PageStyleName)
+
+	_sPosition = BindingLine_Position_PAGE_LEFT	&apos; 預設位置在頁面左邊
+	_sString = &quot;裝訂線&quot;		&apos; 預設顯示字串
+	_sFontName = _oDoc.CharFontNameAsian	&apos; 預設字體名稱
+	_nFontSize = 10.5		&apos; 預設字體大小 pt
+	_nColor = RGB(0, 0, 0)	&apos; 預設黑色
+	_nBoundary = 1000		&apos; 預設邊界距離 1 cm
+	_nDrawPageType = BindingLine_Draw_FIRST_PAGE
+
+End Sub		&apos;	Constructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Terminate()
+
+End Sub		&apos;	Destructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Public Sub Dispose()
+	Call Class_Terminate()
+End Sub
+
+&apos;----------------------------
+&apos; 設定/取得字體名稱
+&apos;----------------------------
+Property Let FontName(ByVal sFontName As String)
+	If Trim(sFontName) = &quot;&quot; Then
+		Exit Property
+	End If
+	_sFontName = sFontName
+End Property
+Property Get FontName() As String
+	FontName = _sFontName
+End Property
+
+&apos;----------------------------
+&apos; 設定/取得字體大小
+&apos;----------------------------
+Property Let FontSize(ByVal nFontSize As Double)
+	If (nFontSize &lt;= 0) Then
+		Exit Property
+	End If
+	_nFontSize = nFontSize
+End Property
+Property Get FontSize() As Double
+	FontSize = _nFontSize
+End Property
+
+&apos;----------------------------
+&apos; 設定/取得顯示字串
+&apos;----------------------------
+Property Let String(ByVal sString As String)
+	_sString = sString
+End Property
+Property Get String() As String
+	String = _sString
+End Property
+
+&apos;----------------------------
+&apos; 設定/取得顏色值
+&apos;----------------------------
+Property Let Color(ByVal nColor As Long)
+	_nColor = nColor
+End Property
+Property Get Color() As Long
+	Color = _nColor
+End Property
+
+&apos;----------------------------
+&apos; 設定邊界距離
+&apos;----------------------------
+Property Let Boundary(ByVal nBoundary As Double)
+	If (nBoundary &lt;= 0) Then
+		Exit Property
+	End If
+	_nBoundary = nBoundary * 1000
+End Property
+Property Get Boundary() As Double
+	Boundary = _nBoundary / 1000
+End Property
+
+&apos;----------------------------
+&apos; 設定/取得插入頁面方式
+&apos;----------------------------
+Property Let DrawType(ByVal nType As Long)
+	_nDrawPageType = nType
+End Property
+Property Get DrawType() As Long
+	DrawType = _nDrawPageType
+End Property
+
+&apos;----------------------------
+&apos; 設定/取得頁面位置
+&apos;----------------------------
+Property Let Position(ByVal sType As String)
+	_sPosition = sType
+End Property
+Property Get Position() As String
+	Position = _sPosition
+End Property
+
+
+Public Function go()
+	Dim I As Long, J As Long
+	Dim aProp() As Object
+
+	Select Case _nDrawPageType
+		Case BindingLine_Draw_FIRST_PAGE
+			_DrawLine(1)
+		Case BindingLine_Draw_CURRENT_PAGE
+			_DrawLine(_oViewCursor.Page)
+		Case BindingLine_Draw_ALL_PAGES
+			aProp = _oDoc.getDocumentProperties().DocumentStatistics
+			For I = LBound(aProp) To UBound(aProp)
+				If (aProp(I).Name = &quot;PageCount&quot;) Then
+					For J = 1 To aProp(I).Value
+						_DrawLine(J)
+					Next J
+					Exit For
+				End If
+			Next I
+	End Select
+
+End Function
+
+
+Private Function _DrawLine(ByVal nPageNo As Long)
+	Dim oShapeCollection As Object
+	Dim oLineShape As Object
+	Dim oTextShape As Object
+	Dim oSize As New com.sun.star.awt.Size
+	Dim oShapeGroup As Object
+
+	Dim nHoriOrient As Integer
+	Dim nHoriOrientPosition As Long
+	Dim nHoriOrientRelation As Integer
+	Dim nVertOrient As Integer
+	Dim nVertOrientPosition As Long
+	Dim nVertOrientRelation As Integer
+	Dim nLength As Long
+
+	If (nPageNo &lt;&gt; _oViewCursor.Page) Then
+		_oViewCursor.jumpToPage(nPageNo, False)
+	End If
+
+	&apos; 群組用
+	oShapeCollection  = CreateUnoService(&quot;com.sun.star.drawing.ShapeCollection&quot;)
+
+	Select Case (_sPosition)
+		Case BindingLine_Position_PAGE_LEFT	&apos; 左邊
+			oSize.Width = 0
+			oSize.Height = _oPageStyle.Height - _oPageStyle.TopMargin - _
+							_oPageStyle.BottomMargin
+			If (_oPageStyle.HeaderIsOn) Then
+				oSize.Height = oSize.Height - _oPageStyle.HeaderHeight
+			End If
+			If (_oPageStyle.FooterIsOn) Then
+				oSize.Height = oSize.Height - _oPageStyle.FooterHeight
+			End If
+			nLength = oSize.Height
+			nHoriOrient = com.sun.star.text.HoriOrientation.NONE
+			nHoriOrientPosition = _nBoundary
+			nHoriOrientRelation = com.sun.star.text.RelOrientation.PAGE_LEFT
+			nVertOrient = com.sun.star.text.VertOrientation.NONE
+			nVertOrientPosition = _oPageStyle.TopMargin
+			nVertOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+
+		Case BindingLine_Position_PAGE_RIGHT	&apos; 右邊
+			oSize.Width = 0
+			oSize.Height = _oPageStyle.Height - _oPageStyle.TopMargin - _
+							_oPageStyle.BottomMargin
+			If (_oPageStyle.HeaderIsOn) Then
+				oSize.Height = oSize.Height - _oPageStyle.HeaderHeight
+			End If
+			If (_oPageStyle.FooterIsOn) Then
+				oSize.Height = oSize.Height - _oPageStyle.FooterHeight
+			End If
+			nLength = oSize.Height
+			nHoriOrient = com.sun.star.text.HoriOrientation.NONE
+			nHoriOrientPosition = _oPageStyle.Width - _nBoundary
+			nHoriOrientRelation = com.sun.star.text.RelOrientation.PAGE_LEFT
+			nVertOrient = com.sun.star.text.VertOrientation.NONE
+			nVertOrientPosition = _oPageStyle.TopMargin
+			nVertOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+
+		Case BindingLine_Position_PAGE_TOP
+			oSize.Height = 0
+			oSize.Width = _oPageStyle.Width - _oPageStyle.LeftMargin - _
+							_oPageStyle.RightMargin
+			nLength = oSize.Width
+			nHoriOrient = com.sun.star.text.HoriOrientation.NONE
+			nHoriOrientPosition = _oPageStyle.LeftMargin
+			nHoriOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+			nVertOrient = com.sun.star.text.VertOrientation.NONE
+			nVertOrientPosition = _nBoundary
+			nVertOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+
+		Case BindingLine_Position_PAGE_BOTTOM
+			oSize.Height = 0
+			oSize.Width = _oPageStyle.Width - _oPageStyle.LeftMargin - _
+							_oPageStyle.RightMargin
+			nLength = oSize.Width
+			nHoriOrient = com.sun.star.text.HoriOrientation.NONE
+			nHoriOrientPosition = _oPageStyle.LeftMargin
+			nHoriOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+			nVertOrient = com.sun.star.text.VertOrientation.NONE
+			nVertOrientPosition = _oPageStyle.Height - _nBoundary
+			nVertOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+	End Select
+
+	Set oLineShape = _oDoc.createInstance(&quot;com.sun.star.drawing.LineShape&quot;)
+	With oLineShape
+		&apos;.Name
+		.AnchorType = com.sun.star.text.TextContentAnchorType.AT_PAGE &apos; 至頁面
+		.AnchorPageNo = _oViewCursor.Page
+		.LineStyle = com.sun.star.drawing.LineStyle.DASH
+		.HoriOrient = nHoriOrient
+		.HoriOrientPosition = nHoriOrientPosition
+		.HoriOrientRelation = nHoriOrientRelation
+
+		.VertOrient = nVertOrient
+		.VertOrientPosition = nVertOrientPosition
+		.VertOrientRelation = nVertOrientRelation
+
+		.LineColor = _nColor
+		.LineWidth = 10	&apos; 線寬
+		&apos;.MoveProtect = True	&apos; 保護位置
+		.setSize(oSize)
+	End With
+	_oDrawPage.add(oLineShape)
+	oShapeCollection.add(oLineShape)
+	
+	Dim nDistance As Long &apos; 字與字的間距
+	Dim i As Long
+
+	nDistance = nLength / (Len(_sString) + 1)
+
+	For i = 1 To Len(_sString)
+		Set oTextShape =  _oDoc.createInstance(&quot;com.sun.star.drawing.TextShape&quot;)
+		With oTextShape
+			&apos;.Name = &quot;繪圖文字&quot;
+			.AnchorType = com.sun.star.text.TextContentAnchorType.AT_PAGE &apos; 至頁面
+			.AnchorPageNo = _oViewCursor.Page
+			_oDrawPage.add(oTextShape)
+			.FillStyle = com.sun.star.drawing.FillStyle.SOLID
+			.FillColor = RGB(255, 255, 255)
+			.TextAutoGrowHeight = True
+			.TextAutoGrowWidth = True
+			.setString(Mid(_sString, i , 1))
+			.CharColor = _nColor
+			.CharHeight = _nFontSize
+			.CharHeightAsian = _nFontSize
+			.CharFontName = _sFontName
+			.CharFontNameAsian = _sFontName
+			.HoriOrient = nHoriOrient
+			.HoriOrientRelation = nHoriOrientRelation
+			.VertOrient = nVertOrient
+			.VertOrientRelation = nVertOrientRelation
+
+			Select Case _sPosition
+				Case BindingLine_Position_PAGE_LEFT
+					.HoriOrientPosition = _nBoundary - (.Size.Width / 2)
+					.VertOrientPosition = _oPageStyle.TopMargin + (nDistance * i) - (.Size.Height / 2)
+
+				Case BindingLine_Position_PAGE_RIGHT
+					.HoriOrientPosition = _oPageStyle.Width - _nBoundary - (.Size.Width / 2)
+					.VertOrientPosition = _oPageStyle.TopMargin + (nDistance * i) - (.Size.Height / 2)
+
+				Case BindingLine_Position_PAGE_TOP
+					.HoriOrientPosition = _oPageStyle.LeftMargin + (nDistance * i) - (.Size.Width / 2)
+					.VertOrientPosition = _nBoundary - (.Size.Height / 2)
+
+				Case BindingLine_Position_PAGE_BOTTOM
+					.HoriOrientPosition = _oPageStyle.LeftMargin + (nDistance * i) - (.Size.Width / 2)
+					.VertOrientPosition = _oPageStyle.Height - _nBoundary - (.Size.Height / 2)
+			End Select
+
+		End With
+		oShapeCollection.add(oTextShape)
+	Next i
+
+	Set oShapeGroup = _oDrawPage.group(oShapeCollection)	&apos; 群組起來
+	With oShapeGroup
+		.setName(BINGINGLINE_NAME &amp; &quot;.&quot; &amp; nPageNo &amp; &quot;.&quot; &amp; _sPosition)	&apos; 群組名稱
+	End With
+
+End Function
+</script:module>

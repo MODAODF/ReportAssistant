@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="WaterMarkClass" script:language="StarBasic" script:moduleType="normal">&apos;==================================================
+&apos; 浮水印物件
+&apos; Class Name : WaterMarkClass
+&apos; Propertys :
+&apos;
+&apos; Methods:
+
+&apos;
+&apos; 作者 : 鄧佳民
+&apos; 最後修改時間 : 
+&apos;==================================================
+
+Option Compatible
+Option ClassModule
+
+Option Explicit
+
+Const WATERMARK_NAME		As String = &quot;OSSIIPictureWaterMark&quot;
+Const TEXT_WATERMARK_NAME	As String = &quot;OSSIITextWaterMark&quot;
+
+Const PICTURE_POWERPLUS_WATERMARK_NAME As String = &quot;WordPictureWatermark&quot;
+Const TEXT_POWERPLUS_WATERMARK_NAME As String = &quot;PowerPlusWaterMarkObject&quot;
+
+Const WATERMARK_AUTO_SIZE	As Double = 1.0
+
+Private _oDoc As Object
+Private _oViewCursor As Object
+Private _oDrawPage As Object
+Private _oPageStyle As Object
+Private _oBitMaps As Object
+
+Private _sImagePath As String		&apos; 圖片路徑
+Private _nScaleRatio As Double		&apos; 縮放比例 0-自動, 50% 為0.5、100%為 1、150% 為 1.5 以此類推
+Private _nImageTransparence	As Long	&apos; 圖片透明度
+Private _nImageAngle As Long
+
+Private _sTextWords As String		&apos; 文字浮水印字樣
+Private _sTextFontName As String	&apos; 文字浮水印字型名稱
+Private _nTextFontSize As Long		&apos; 文字浮水印大小
+Private _nTextFontColor As Long		&apos; 文字浮水印顏色
+Private _nTextTransparence As Long	&apos; 文字浮水印透明度
+Private _nTextAngle As Long			&apos; 文字浮水印角度
+
+&apos; -----------------------------------------------------------------------------------------------------------------------
+&apos; CONSTRUCTORS / DESTRUCTORS						        														---
+&apos; -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Initialize()
+	Dim oShape As Object
+
+	Set _oDoc = ThisComponent
+	If ( Not _oDoc.SupportsService(&quot;com.sun.star.text.TextDocument&quot;)) Then
+		Msgbox(&quot;浮水印只提供 Writer 使用&quot;, MB_ICONSTOP)
+		Exit Sub
+	End If
+
+	Set _oViewCursor = _oDoc.CurrentController.getViewCursor()
+	Set _oDrawPage = _oDoc.getDrawPage()
+	Set _oPageStyle	= _oDoc.getStyleFamilies().getByName(&quot;PageStyles&quot;).getByName(_oViewCursor.PageStyleName)
+	Set _oBitmaps = _oDoc.createInstance(&quot;com.sun.star.drawing.BitmapTable&quot;)
+
+	&apos; 取得文件的圖形浮水印
+	Set oShape = getPictureWaterMark()
+	If (IsNull(oShape)) Then
+		_nScaleRatio = 0			&apos; 自動縮放
+		_nImageTransparence = 90	&apos; 圖片透明度預設 90%
+		_nImageAngle = 0			&apos; 圖片旋轉角度
+	Else
+		_nScaleRatio = oShape.Description
+		_nImageTransparence = oShape.Transparency
+		_nImageAngle = oShape.RotateAngle / 100
+	End If
+
+	&apos; 取得文件的文字浮水印
+	Set oShape = getTextWaterMark()
+	If (IsNull(oShape)) Then
+		_sTextWords = &quot;&quot;
+		_sTextFontName = _oDoc.CharFontNameAsian
+		_nTextFontColor = &amp;Hd0d0d0
+		_nTextTransparence = 50
+		_nTextAngle = 45
+	Else
+		_sTextWords = oShape.String
+		_sTextFontName = oShape.CharFontName
+		_nTextFontColor = oShape.FillColor
+		_nTextTransparence = oShape.FillTransparence
+		_nTextAngle = oShape.RotateAngle / 100
+	End If
+
+
+End Sub		&apos;	Constructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Terminate()
+
+End Sub		&apos;	Destructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Public Sub Dispose()
+	Call Class_Terminate()
+End Sub
+
+Function getPageStyleName()
+	getPageStyleName = _oViewCursor.PageStyleName
+End Function
+
+
+Property Let ImagePath(sPath As String)
+	_sImagePath = sPath
+End Property
+Property Get ImagePath() As Long
+	ImagePath = _sImagePath
+End Property
+
+Property Let ScaleRatio(nRatio As Double)
+	_nScaleRatio = nRatio
+End Property
+Property Get ScaleRatio() As Double
+	ScaleRatio = _nScaleRatio
+End Property
+
+Property Let ImageTransparence(nTransparence As Long)
+	_nImageTransparence = nTransparence
+End Property
+Property Get ImageTransparence() As Long
+	ImageTransparence = _nImageTransparence
+End Property
+
+Property Let TextWords(sString As String)
+	_sTextWords = sString
+End Property
+Property Get TextWords() As String
+	TextWords = _sTextWords
+End Property
+
+Property Let TextFontName(sString As String)
+	_sTextFontName = sString
+End Property
+Property Get TextFontName() As String
+	TextFontName = _sTextFontName
+End Property
+
+Property Let TextFontColor(nColor As Long)
+	_nTextFontColor = nColor
+End Property
+Property Get TextFontColor() As Long
+	TextFontColor = _nTextFontColor
+End Property
+
+Property Let TextTransparence(nTransparence As Long)
+	_nTextTransparence = nTransparence
+End Property
+Property Get TextTransparence() As Long
+	TextTransparence = _nTextTransparence
+End Property
+
+Property Let TextAngle(nAngle As Long)
+	_nTextAngle = nAngle
+End Property
+Property Get TextAngle() As Long
+	TextAngle = _nTextAngle
+End Property
+
+Function hasPictureWaterMark() As Boolean
+	Dim oEnum As Object
+	Dim oPictureShape As Object
+	Dim nLen As Long
+	Dim sName As String
+
+	nLen = Len(PICTURE_POWERPLUS_WATERMARK_NAME)
+
+	&apos; 掃描所有繪圖物件
+	Set oEnum = _oDrawPage.createEnumeration()
+	Do While oEnum.hasMoreElements()
+		Set oPictureShape = oEnum.nextElement()
+		sName = oPictureShape.Name
+		If (sName = WATERMARK_NAME Or _
+			Left(sName, nLen) = PICTURE_POWERPLUS_WATERMARK_NAME) Then
+			If (oPictureShape.TextRange.PageStyleName = _oViewCursor.PageStyleName) Then
+				hasPictureWaterMark = True
+				Exit Function
+			End If
+		End If
+	Loop
+
+	hasPictureWaterMark = False
+
+End Function
+
+Function getPictureWaterMark() As Object
+	Dim oEnum As Object
+	Dim oPictureShape As Object
+	Dim nLen As Long
+	Dim sName As String
+
+	nLen = Len(PICTURE_POWERPLUS_WATERMARK_NAME)
+
+	&apos; 掃描所有繪圖物件
+	Set oEnum = _oDrawPage.createEnumeration()
+	Do While oEnum.hasMoreElements()
+		Set oPictureShape = oEnum.nextElement()
+		sName = oPictureShape.Name
+		If (sName = WATERMARK_NAME Or _
+			Left(sName, nLen) = PICTURE_POWERPLUS_WATERMARK_NAME) Then
+			If (oPictureShape.TextRange.PageStyleName = _oViewCursor.PageStyleName) Then
+				Set getPictureWaterMark = oPictureShape
+				Exit Function
+			End If
+		End If
+	Loop
+
+	Set getPictureWaterMark = Nothing
+
+End Function
+
+Function removePictureWaterMark()
+	Dim oEnum As Object
+	Dim oPictureShape As Object
+	Dim nLen As Long
+	Dim sName As String
+
+	nLen = Len(PICTURE_POWERPLUS_WATERMARK_NAME)
+
+	&apos; 掃描所有繪圖物件
+	Set oEnum = _oDrawPage.createEnumeration()
+	Do While oEnum.hasMoreElements()
+		Set oPictureShape = oEnum.nextElement()
+		sName = oPictureShape.Name
+		If (sName = WATERMARK_NAME Or _
+			Left(sName, nLen) = PICTURE_POWERPLUS_WATERMARK_NAME) Then
+			If (oPictureShape.TextRange.PageStyleName = _oViewCursor.PageStyleName) Then
+				oPictureShape.dispose()
+				&apos; 刪除 Bitmap Table 中的檔案
+				If (_oBitmaps.hasByName(sName)) Then
+					_oBitmaps.removeByName(sName)
+				End If
+			End If
+		End If
+	Loop
+	
+End Function
+
+&apos; 是否有文字浮水印 (包括自製、LibreOffice或Word)
+Function hasTextWaterMark() As Boolean
+	Dim oEnum As Object
+	Dim oGraphic As Object
+	Dim nLen As Long
+
+	nLen = Len(TEXT_POWERPLUS_WATERMARK_NAME)
+	Set oEnum = _oDrawPage.createEnumeration()
+	Do While oEnum.hasMoreElements()
+		Set oGraphic = oEnum.nextElement()
+		If (oGraphic.Name = TEXT_WATERMARK_NAME Or _
+			Left(oGraphic.Name, nLen) = TEXT_POWERPLUS_WATERMARK_NAME) Then
+			hasTextWaterMark = True
+			Exit Function
+		End If
+	Loop
+
+	hasTextWaterMark = False
+
+End Function
+
+&apos; 取得文字浮水印物件
+Private Function getTextWaterMark() As Object
+	Dim oEnum As Object
+	Dim oGraphic As Object
+	Dim nLen As Long
+
+	nLen = Len(TEXT_POWERPLUS_WATERMARK_NAME)
+	Set oEnum = _oDrawPage.createEnumeration()
+	Do While oEnum.hasMoreElements()
+		Set oGraphic = oEnum.nextElement()
+		If (oGraphic.Name = TEXT_WATERMARK_NAME Or _
+			Left(oGraphic.Name, nLen) = TEXT_POWERPLUS_WATERMARK_NAME) Then
+			Set getTextWaterMark = oGraphic
+			Exit Function
+		End If
+	Loop
+
+	Set getTextWaterMark = Nothing
+
+End Function
+
+&apos; 移除文字浮水印 (包括自製、LibreOffice或Word)
+Function removeTextWaterMark()
+	Dim oEnum As Object
+	Dim oGraphic As Object
+	Dim nLen As Long
+
+	nLen = Len(TEXT_POWERPLUS_WATERMARK_NAME)
+	Set oEnum = _oDrawPage.createEnumeration()
+	Do While oEnum.hasMoreElements()
+		Set oGraphic = oEnum.nextElement()
+		If (oGraphic.Name = TEXT_WATERMARK_NAME Or _
+			Left(oGraphic.Name, nLen) = TEXT_POWERPLUS_WATERMARK_NAME) Then
+			oGraphic.dispose()
+		End If
+	Loop
+
+End Function
+
+Function hasImageWaterMark() As Boolean
+	hasImageWaterMark = False
+
+	If (_oPageStyle.BackGraphicURL &lt;&gt; &quot;&quot;) Then
+		hasImageWaterMark = True
+	End If
+
+End Function
+
+Function removeImageWaterMark()
+	Dim sName As String
+
+	With _oPageStyle
+		sName = .FillBitmapName
+		.BackGraphicURL = &quot;&quot;
+		.FillBitmapURL = &quot;&quot;
+		.FillBitmapName = &quot;&quot;
+		.FillTransparence = 0
+	End With
+
+	If (_oBitmaps.hasByName(sName)) Then
+		_oBitmaps.removeByName(sName)
+	End If
+
+End Function
+
+Function setImageWaterMark()
+	Dim sWaterMarkURL As String
+	Dim sBitmapURL As String
+
+	&apos; 有指定圖片路徑
+	If (_sImagePath &lt;&gt; &quot;&quot;) Then
+		sWaterMarkURL = ConvertToURL(_sImagePath)	&apos; 轉換成統一的 URL 格式
+		removeImageWaterMark() &apos; 移除先前的浮水印
+		With _oBitMaps
+			If (.hasByName(WATERMARK_NAME)) Then
+				.replaceByName(WATERMARK_NAME, sWaterMarkURL)
+			Else
+				.insertByName(WATERMARK_NAME, sWaterMarkURL)
+			End If
+			sBitmapURL = .getByName(WATERMARK_NAME)	&apos; 取得內部 URL (vnd.sun.star.GraphicObject:....)
+		End With
+
+		With _oPageStyle
+			.FillBitmapLogicalSize = True
+			.BackGraphicLocation = com.sun.star.style.GraphicLocation.MIDDLE_MIDDLE	&apos; 背景置中
+			.FillBitmapMode = com.sun.star.drawing.BitmapMode.NO_REPEAT	&apos; 不要鋪排
+			.FillBitmapRectanglePoint = com.sun.star.drawing.RectanglePoint.MIDDLE_MIDDLE
+			.BackGraphicURL = sBitmapURL
+			.FillBitmapURL = sBitmapURL
+			.FillBitmapName = WATERMARK_NAME
+		End With
+		_sImagePath = &quot;&quot;	&apos; 將路徑清空，避免下次再次處理
+	End If
+
+	With _oPageStyle
+		&apos; ToDo : 須完成縮放比例程式
+		.FillBitmapSizeX = 0
+		.FillBitmapSizeY = 0
+		&apos;---------------------------
+		.FillTransparence = _nImageTransparence
+	End With
+
+End Function
+
+Function setPictureWaterMark()
+	Dim sWaterMarkURL As String
+	Dim sBitmapURL As String
+	Dim oGraphic As Object
+	Dim oScopeSize As New com.sun.star.awt.Size
+	Dim oNewSize  As com.sun.star.awt.Size
+
+	&apos; 有指定圖片路徑
+	If (_sImagePath &lt;&gt; &quot;&quot;) Then
+		sWaterMarkURL = ConvertToURL(_sImagePath)	&apos; 轉換成統一的 URL 格式
+		removePictureWaterMark()	&apos; 移除先前的浮水印
+		With _oBitMaps
+			If (.hasByName(WATERMARK_NAME)) Then
+				.replaceByName(WATERMARK_NAME, sWaterMarkURL)
+			Else
+				.insertByName(WATERMARK_NAME, sWaterMarkURL)
+			End If
+			sBitmapURL = .getByName(WATERMARK_NAME)	&apos; 取得內部 URL (vnd.sun.star.GraphicObject:....)
+		End With
+
+		Set oGraphic = _oDoc.createInstance(&quot;com.sun.star.drawing.GraphicObjectShape&quot;)
+		With oGraphic
+			.AnchorType = com.sun.star.text.TextContentAnchorType.AT_CHARACTER	&apos; 至字元
+			.Name = WATERMARK_NAME
+			.GraphicURL = sBitmapURL
+		End With
+
+		With _oPageStyle
+			If (Not .HeaderIsOn) Then
+				.HeaderIsOn = True
+			End If
+			.HeaderText.insertTextContent(.HeaderText.getEnd(), oGraphic, False)	&apos; 插入圖片
+		End With
+		&apos;_oDrawPage.add(oGraphic)
+		_sImagePath = &quot;&quot;	&apos; 避免重複處理
+	Else
+		Set oGraphic = getPictureWaterMark()
+	End If
+
+	With oGraphic
+		.HoriOrient = com.sun.star.text.HoriOrientation.CENTER
+		.VertOrient = com.sun.star.text.VertOrientation.CENTER
+		If (_nScaleRatio = 0) Then	&apos; 自動縮放
+			oScopeSize.Height = _oPageStyle.Height - _oPageStyle.TopMargin - _oPageStyle.BottomMargin
+			&apos; 有使用頁首的話，再減掉頁首高度
+			If (_oPageStyle.HeaderIsOn) Then
+				oScopeSize.Height = oScopeSize.Height - _oPageStyle.HeaderHeight
+			End If
+			&apos; 有使用頁尾的話，再減掉頁尾高度
+			If (_oPageStyle.FooterIsOn) Then
+				oScopeSize.Height = oScopeSize.Height - _oPageStyle.FooterHeight
+			End If
+			oScopeSize.Width = _oPageStyle.Width - _oPageStyle.LeftMargin - _oPageStyle.RightMargin
+			&apos; 對齊內文區
+			.HoriOrientRelation = com.sun.star.text.RelOrientation.PAGE_PRINT_AREA
+			.VertOrientRelation = com.sun.star.text.RelOrientation.PAGE_PRINT_AREA
+		Else
+			oScopeSize.Height = _oPageStyle.Height * _nScaleRatio
+			oScopeSize.Width = _oPageStyle.Width * _nScaleRatio
+			&apos; 對齊頁面
+			.HoriOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+			.VertOrientRelation = com.sun.star.text.RelOrientation.PAGE_FRAME
+		End If
+		&apos; 相容性設定 LibreOffice 5.4 之前，因為手殘，變成
+		&apos; com.sun.star.text.WrapTextMode.THROUGHT
+		&apos; 正確為 (Ooo 無此問題)
+		&apos; com.sun.star.text.WrapTextMode.THROUGH
+		.Surround = 1
+		&apos;---------------------------------------------------
+		Set oNewSize = ScaleSize(oScopeSize, .GraphicObjectFillBitmap.Size)
+		.Transparency = _nImageTransparence
+		.setSize(oNewSize)
+		.ZOrder = 0
+		&apos; 借用 Description 存放縮放比例
+		.Description = _nScaleRatio
+		.RotateAngle = _nImageAngle * 100
+	End With
+
+End Function
+
+&apos; 計算圖形在限定範圍內縮放的大小
+Private Function ScaleSize(oScopeSize As com.sun.star.awt.Size, _
+						  oImageSize As com.sun.star.awt.Size) As com.sun.star.awt.Size
+	Dim oNewSize As New com.sun.star.awt.Size
+	Dim nImageRatio As Double
+	Dim nScopeRatio As Double
+
+	nImageRatio = CDbl(oImageSize.Height) / CDbl(oImageSize.Width)
+	nScopeRatio = CDbl(oScopeSize.Height) / CDbl(oScopeSize.Width)
+	If (nScopeRatio &gt; nImageRatio) Then
+		oNewSize.Width  = oScopeSize.Width
+    	oNewSize.Height = CLng(CDbl(oScopeSize.Width) * nImageRatio)
+	Else
+		oNewSize.Width  = CLng(CDbl(oScopeSize.Height) / nImageRatio)
+		oNewSize.Height = oScopeSize.Height
+	End If
+
+	Set ScaleSize = oNewSize
+End Function
+
+
+Function setTextWaterMark()
+	Dim oFrame As Object
+	Dim oDispatcher as Object
+	Dim args1(4) as new com.sun.star.beans.PropertyValue
+
+	args1(0).Name = &quot;Text&quot;
+	args1(0).Value = _sTextWords
+	args1(1).Name = &quot;Font&quot;
+	args1(1).Value = _sTextFontName
+	args1(2).Name = &quot;Angle&quot;
+	args1(2).Value = _nTextAngle
+	args1(3).Name = &quot;Transparency&quot;
+	args1(3).Value = _nTextTransparence
+	args1(4).Name = &quot;Color&quot;
+	args1(4).Value = _nTextFontColor
+
+	Set oFrame = _oDoc.CurrentController.Frame
+	oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:Watermark&quot;, &quot;&quot;, 0, args1)
+
+	&apos; 由於 LibreOffice 浮水印對中文字型沒有處理，只好自己來
+	Dim oEnum As Object
+	Dim oGraphic As Object
+	Dim nLen As Long
+
+	nLen = Len(TEXT_POWERPLUS_WATERMARK_NAME)
+	Set oEnum = _oDrawPage.createEnumeration()
+	Do While oEnum.hasMoreElements()
+		Set oGraphic = oEnum.nextElement()
+		With oGraphic
+			If (Left(.Name, nLen) = TEXT_POWERPLUS_WATERMARK_NAME) Then
+				.CharHeightAsian = WATERMARK_AUTO_SIZE
+				.CharHeightComplex = WATERMARK_AUTO_SIZE
+				.CharFontNameAsian = _sTextFontName
+				.CharFontNameComplex = _sTextFontName
+			End If
+		End With
+	Loop
+
+End Function
+
+
+Function insertTextWaterMark(ByVal Text As String)
+	Dim oCustomShape As Object
+	Dim oSize As New com.sun.star.awt.Size
+	Dim _nRotateAngle As Double	&apos; 角度
+	Dim sFontName As String
+
+	Dim fRatio As Double
+	Dim nWidth As Double, nHeight As Double
+	Dim aMatrix As New com.sun.star.drawing.HomogenMatrix3
+	sFontName = &quot;標楷體&quot;
+	_nRotateAngle = 45
+
+	fRatio = 1 / Len(Text)
+
+	With _oPageStyle
+		.HeaderIsOn = True
+		If (.Width &lt; .Height) Then	&apos; 直式頁面
+			nWidth = .Width - .LeftMargin - .RightMargin
+		Else	&apos; 橫式頁面
+			nWidth = .Height - .TopMargin - .BottomMargin
+		End If
+		nHeight = fRatio * nWidth
+	End With
+
+	&apos;--------------------------------------------------------
+    &apos;basegfx::B2DHomMatrix aTransformation;
+    &apos;aTransformation.identity();
+    &apos;aTransformation.scale(nWidth, nHeight);
+    &apos;aTransformation.rotate(F_PI180 * -1 * _nTextAngle);
+    &apos;(3.14159265358979323846 / 180) * -1 * _nTextAngle
+    &apos;drawing::HomogenMatrix3 aMatrix;
+    &apos;aMatrix.Line1.Column1 = aTransformation.get(0, 0);
+    &apos;aMatrix.Line1.Column2 = aTransformation.get(0, 1);
+    &apos;aMatrix.Line1.Column3 = aTransformation.get(0, 2);
+    &apos;aMatrix.Line2.Column1 = aTransformation.get(1, 0);
+    &apos;aMatrix.Line2.Column2 = aTransformation.get(1, 1);
+    &apos;aMatrix.Line2.Column3 = aTransformation.get(1, 2);
+    &apos;aMatrix.Line3.Column1 = aTransformation.get(2, 0);
+    &apos;aMatrix.Line3.Column2 = aTransformation.get(2, 1);
+    &apos;aMatrix.Line3.Column3 = aTransformation.get(2, 2);
+	&apos;--------------------------------------------------------
+    aMatrix.Line1.Column1 = 17001
+    aMatrix.Line1.Column2 = 0
+    aMatrix.Line1.Column3 = 0
+    aMatrix.Line2.Column1 = 0
+    aMatrix.Line2.Column2 = 4250
+    aMatrix.Line2.Column3 = 0
+    aMatrix.Line3.Column1 = 0
+    aMatrix.Line3.Column2 = 0
+    aMatrix.Line3.Column3 = 1
+
+
+
+	msgbox (nHeight &amp; &quot;x&quot; &amp; nWidth)
+	Set oCustomShape = _oDoc.createInstance(&quot;com.sun.star.drawing.CustomShape&quot;)
+	&apos;_oDrawPage.add(oCustomShape)
+
+	With oCustomShape
+		.AnchorType = com.sun.star.text.TextContentAnchorType.AT_CHARACTER
+		With _oPageStyle
+			If (Not .HeaderIsOn) Then
+				.HeaderIsOn = True
+			End If
+			.HeaderText.insertTextContent(.HeaderText.getEnd(), oCustomShape, False)	&apos; 插入圖片
+		End With
+
+		.FillColor = _nTextFontColor	&apos; 顏色
+		.FillStyle = com.sun.star.drawing.FillStyle.SOLID
+		.FillTransparence = _nTextTransparence	&apos; 透明度
+		.LineStyle = com.sun.star.drawing.LineStyle.NONE
+		.Opaque = False
+		.TextAutoGrowHeight = False
+		.TextAutoGrowWidth = False
+		&apos; TODO:
+		.TextMinimumFrameHeight = nHeight
+		.TextMinimumFrameWidth = nWidth
+		&apos;-------------------------
+		.TextWrap = 1
+		.HoriOrientRelation = com.sun.star.text.RelOrientation.PAGE_PRINT_AREA
+		.VertOrientRelation = com.sun.star.text.RelOrientation.PAGE_PRINT_AREA
+		.CharFontName = sFontName
+		.CharFontNameAsian = sFontName
+		.CharFontNameComplex = sFontName
+		.CharHeight = WATERMARK_AUTO_SIZE
+		.CharHeightAsian = WATERMARK_AUTO_SIZE
+		.CharHeightComplex = WATERMARK_AUTO_SIZE
+		&apos; TODO:
+		.Transformation = aMatrix
+		&apos; xPropertySet-&gt;setPropertyValue(&quot;Transformation&quot;, uno::makeAny(aMatrix));
+
+		.Text.setString(Text)
+		Dim aGeomPropSeq() As Object
+		Dim bFound As Boolean
+		Dim aProp(0) As Object
+		Dim I As Long
+		aProp(0) = New com.sun.star.beans.PropertyValue
+		aProp(0).Name = &quot;TextPath&quot;
+		aProp(0).Value = True
+		.createCustomShapeDefaults(&quot;fontwork-plain-text&quot;)
+		aGeomPropSeq = .CustomShapeGeometry
+		bFound = False
+		For I = LBound(aGeomPropSeq) To UBound(aGeomPropSeq)
+			If (aGeomPropSeq(I).Name = &quot;TextPath&quot;) Then
+				aGeomPropSeq(I).Value = True
+				bFound = True
+				Exit For
+			End If
+		Next I
+
+		If (Not bFound) Then
+			ReDim Preserve aGeomPropSeq(UBound(aGeomPropSeq) + 1)
+			aGeomPropSeq(UBound(aGeomPropSeq)) = New com.sun.star.beans.PropertyValue
+			aGeomPropSeq(UBound(aGeomPropSeq)).Name = &quot;TextPath&quot;
+			aGeomPropSeq(UBound(aGeomPropSeq)).Value = aProp
+		End If
+		.CustomShapeGeometry = aGeomPropSeq
+		.HoriOrient = com.sun.star.text.HoriOrientation.CENTER
+		.VertOrient = com.sun.star.text.VertOrientation.CENTER
+		.setName(TEXT_WATERMARK_NAME)
+		.ZOrder = 1
+	End With
+End Function
+
+</script:module>

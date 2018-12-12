@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="ResourceClass" script:language="StarBasic">&apos;==================================================
+&apos; 物件
+&apos; Class Name : ResourceClass
+&apos;==================================================
+
+Option VBASupport 1
+Option Compatible
+Option ClassModule
+
+Option Explicit
+
+Private m_Bag As Object
+Private m_DefaultAttrib As Integer
+
+Private m_PrimaryKey As String
+&apos; -----------------------------------------------------------------------------------------------------------------------
+&apos; CONSTRUCTORS / DESTRUCTORS						        														---
+&apos; -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Initialize()
+	&apos; 參考 https://www.openoffice.org/api/docs/common/ref/com/sun/star/beans/PropertyBag.html
+	Set m_Bag = CreateUnoService(&quot;com.sun.star.beans.PropertyBag&quot;)
+	&apos; 參考 https://www.openoffice.org/api/docs/common/ref/com/sun/star/beans/PropertyAttribute.html
+	m_DefaultAttrib = com.sun.star.beans.PropertyAttribute.REMOVEABLE + _
+						com.sun.star.beans.PropertyAttribute.MAYBEVOID
+	m_PrimaryKey = &quot;&quot;
+
+End Sub	&apos; Constructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Terminate()
+	m_PrimaryKey = &quot;&quot;
+End Sub	&apos; Destructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Public Sub Dispose()
+	Call Class_Terminate()
+End Sub	&apos; Dispose
+
+Function setPrimaryKey(sKeyName As String)
+	m_PrimaryKey = sKeyName
+End Function
+
+Function getPrimaryKey() As String
+	getPrimaryKey = m_PrimaryKey
+End Function
+
+Property Let Value(xValue As Variant)
+	Me.setValue(m_PrimaryKey, xValue)
+End Property
+
+Property Get Value() As Variant
+	Value = getValue(m_PrimaryKey)
+End Property
+
+&apos;--------------------------------------------------
+Function hasByName(sName As String) As Boolean
+	 hasByName = m_Bag.PropertySetInfo.hasPropertyByName(sName)
+End Function
+
+&apos;--------------------------------------------------
+Function setValue(Name As String, Value As Variant)
+	If (IsNull(Value)) Then
+		Value = &quot;&quot;
+	End If
+
+	With m_Bag
+		&apos; 由於 Value 型態若與原先的型態不同，會造成錯誤
+		&apos; 所以一律先移除，再新增
+		If (.PropertySetInfo.hasPropertyByName(Name)) Then
+			.removeProperty(Name)
+		End If
+		.addProperty(Name, m_DefaultAttrib, Value)	&apos; 新增
+	End With
+
+End Function
+
+&apos;--------------------------------------------------
+Function getValue(Name As String) As Variant
+
+	getValue = &quot;&quot;
+	With m_Bag
+		If (Not .PropertySetInfo.hasPropertyByName(Name)) Then
+			.addProperty(Name, m_DefaultAttrib, &quot;&quot;)	&apos; 沒有就新增
+		Else
+			getValue = .getPropertyValue(Name)
+		End If
+		
+	End With
+
+End Function
+
+Function getValues() As Object
+	Set getValues = m_Bag.getPropertyValues()
+End Function
+</script:module>

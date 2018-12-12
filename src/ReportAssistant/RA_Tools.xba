@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="RA_Tools" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+Option Explicit
+
+&apos; 依據oTextBox是否有資料，來決定 oButton 是否 Enable
+Function RA_Button_OnOff(oTextBox as Object, oButton as Object)
+
+	&apos;If (Not oTextBox.supportsService(&quot;com.sun.star.awt.UnoControlEditModel&quot;)) Then
+	&apos;	MsgBox(&quot;RA_Button_OnOff 第一個參數需傳 textbox.model&quot;)
+	&apos;	Exit Function
+	&apos;End If
+	If (Not oButton.supportsService(&quot;com.sun.star.awt.UnoControlButtonModel&quot;)) Then
+		MsgBox(&quot;RA_Button_OnOff 第二個參數需傳 Button.model&quot;)
+		Exit Function
+	End If
+
+	&apos; 去掉文字前空白
+	oTextBox.Text = LTrim(oTextBox.Text)
+	oButton.enabled = IIF(Len(oTextBox.Text) &gt; 0, True, False)
+End Function
+
+&apos;----------------------------------------------
+&apos; 向上移動某個 ListBox Item
+&apos;----------------------------------------------
+Function RA_ItemMoveUp(oListControl As Object)
+	Dim nPos%, nCount%
+	Dim aItems()
+	Dim sTemp$
+
+	nPos = oListControl.getSelectedItemPos()
+	If (nPos &lt; 0) Then
+		Exit Function
+	End If
+	nCount = oListControl.getItemCount()
+	If (nPos &gt; 0 And nCount &gt; 1) Then
+		aItems = oListControl.Model.StringItemList
+		sTemp = aItems(nPos)
+		aItems(nPos) = aItems(nPos - 1)
+		aItems(nPos - 1) = sTemp
+		oListControl.Model.StringItemList = aItems
+		oListControl.selectItemPos(nPos - 1, True)
+	End If
+End Function
+
+&apos;----------------------------------------------
+&apos; 向下移動某個 ListBox Item
+&apos;----------------------------------------------
+Function RA_ItemMoveDown(oListControl As Object)
+	Dim nPos%, nCount%
+	Dim aItems()
+	Dim sTemp$
+
+	nPos = oListControl.getSelectedItemPos()
+	If (nPos &lt; 0) Then
+		Exit Function
+	End If
+	nCount = oListControl.getItemCount()
+	If (nPos &lt; (nCount - 1) And nCount &gt; 1) Then
+		aItems = oListControl.Model.StringItemList
+		sTemp = aItems(nPos)
+		aItems(nPos) = aItems(nPos + 1)
+		aItems(nPos + 1) = sTemp
+		oListControl.Model.StringItemList = aItems
+		oListControl.selectItemPos(nPos + 1, True)
+	End If
+End Function
+
+Function RA_GetFieldType(oField As Object) As String
+	Dim sType As String
+	Dim oInfo As Object
+
+	RA_GetFieldType = &quot;&quot;
+
+	If (oField.supportsService(&quot;com.sun.star.text.TextFields&quot;)) Then
+		RA_GetFieldType = &quot;TextFields&quot; &apos; 欄位集合
+	ElseIf (oField.supportsService(&quot;com.sun.star.text.TextField.JumpEdit&quot;)) Then
+		RA_GetFieldType = &quot;JumpEdit&quot;	&apos; 佔位項(LO 5x前版本)、預留位置(LO 6x)、萬用字元(OpenOffice.org)
+	ElseIf (oField.supportsService(&quot;com.sun.star.text.TextField&quot;)) Then
+		RA_GetFieldType = &quot;UnknowField&quot;
+		oInfo = oField.getPropertySetInfo()
+		If (oInfo.hasPropertyByName(&quot;Representation&quot;) And _
+			oInfo.hasPropertyByName(&quot;URL&quot;) And _
+			oInfo.hasPropertyByName(&quot;TargetFrame&quot;)) Then
+			RA_GetFieldType = &quot;URL&quot;
+		End If
+	End If
+End Function
+
+
+Function RA_MakeField(oDoc As Object, sFieldText As String, sHint as String)
+	If (oDoc.supportsService(&quot;com.sun.star.text.TextDocument&quot;)) Then
+		RA_MakePlaceHolderField(oDoc, sFieldText, sHint)
+	ElseIf (oDoc.SupportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;)) Then
+		RA_MakeCellField(oDoc, sFieldText, sHint)
+	Else
+		MsgBox(&quot;目前只支援文字文件及試算表文件&quot;)
+		Exit Function
+	End If
+End Function
+
+&apos; 在文字文件游標位置處，插入一個佔位項欄位
+Function RA_MakePlaceHolderField(oDoc As Object, sFieldText As String, sHint as String)
+	Dim oViewCursor as Object
+	Dim oLocText as Object
+	Dim oLocCursor as Object
+	Dim oPlaceHolderField As Object
+
+	Set oViewCursor = oDoc.CurrentController.getViewCursor()
+	If (Not IsEmpty(oViewCursor.Cell)) Then
+		Set oLocText = oViewCursor.Cell
+	ElseIf (Not IsEmpty(oViewCursor.Text)) Then
+		Set oLocText = oViewCursor.Text
+	Else
+		MsgBox(&quot;此處無法插入欄位&quot;)
+		Exit Function
+	End If
+
+	oLocCursor = oLocText.createTextCursorByRange(oViewCursor)
+	oPlaceHolderField = oDoc.createInstance(&quot;com.sun.star.text.TextField.JumpEdit&quot;)
+	
+	With oPlaceHolderField
+		.PlaceHolder = sFieldText
+		.Hint = sHint
+		.PlaceHolderType = com.sun.star.text.PlaceholderType.TEXT
+	End With
+
+	oLocText.insertTextContent(oLocCursor, oPlaceHolderField, True)
+
+End Function
+
+Function RA_MakeAnnotationField(oDoc As Object, sAnnoName As String)
+	Dim oViewCursor as Object
+	Dim oLocText as Object
+	Dim oLocCursor as Object
+	Dim oAnnotationField As Object
+
+	If (True = False) Then
+		Set oViewCursor = oDoc.CurrentController.getViewCursor()
+		If (Not IsEmpty(oViewCursor.Cell)) Then
+			Set oLocText = oViewCursor.Cell
+		ElseIf (Not IsEmpty(oViewCursor.Text)) Then
+			Set oLocText = oViewCursor.Text
+		Else
+			MsgBox(&quot;此處無法插入欄位&quot;)
+			Exit Function
+		End If
+
+		oLocCursor = oLocText.createTextCursorByRange(oViewCursor)
+
+		oAnnotationField = oDoc.createInstance(&quot;com.sun.star.text.TextField.Annotation&quot;)
+	
+		With oAnnotationField
+			.Content = sAnnoName
+			.Author = &quot;OSSII&quot;
+			.Name  = &quot;OSSII_ANNO_&quot; &amp; sAnnoName
+		End With
+		oLocText.insertTextContent(oLocCursor, oAnnotationField, True)
+	Else
+		Dim oFrame As Object
+		Dim oDispatcher As Object
+		Dim oParam(1) As New com.sun.star.beans.PropertyValue
+
+		Set oFrame = ThisComponent.CurrentController.Frame
+		Set oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+
+		oParam(0).Name = &quot;Text&quot;
+		oParam(0).Value = sAnnoName
+		oParam(1).Name = &quot;Author&quot;
+		oParam(1).Value = &quot;OSSII&quot;
+
+		oDispatcher.executeDispatch(oFrame, &quot;.uno:InsertAnnotation&quot;, &quot;&quot;, 0, oParam)
+		
+	End If
+
+End Function
+
+&apos; 在試算表文件游標位置處，插入一個文字及註解
+Function RA_MakeCellField(oDoc As Object, sFieldText As String, sHint as String)
+	Dim oSheet As Object
+	Dim oCurrentCell As Object
+
+	oCurrentCell = oDoc.currentSelection
+	If (Not oCurrentCell.supportsService(&quot;com.sun.star.sheet.SheetCell&quot;)) Then
+		MsgBox &quot;只能插入單一儲存格&quot;
+		Exit Function
+	End If
+
+	&apos;Dim oField As Object
+	&apos;Dim oText As Object
+	&apos;Set oField = oDoc.createInstance(&quot;com.sun.star.text.TextField.URL&quot;)
+	&apos;oField.representation = sFieldText
+	&apos;oField.TargetFrame = sHint
+	&apos;oText = oCurrentCell.getText()
+	&apos;oCurrentCell.insertTextContent(oText.createTextCursor(), oField, False)
+	&apos;Exit Function
+
+	Dim oFrame As Object
+	Dim oDispatcher As Object
+	Dim args1(4) as new com.sun.star.beans.PropertyValue
+
+	oFrame = ThisComponent.CurrentController.Frame
+	oDispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+
+	args1(0).Name = &quot;Hyperlink.Text&quot;
+	args1(0).Value = sFieldText
+	args1(1).Name = &quot;Hyperlink.URL&quot;
+	args1(1).Value = &quot;&quot;
+	args1(2).Name = &quot;Hyperlink.Target&quot;
+	args1(2).Value = sHint
+	args1(3).Name = &quot;Hyperlink.Name&quot;
+	args1(3).Value = &quot;&quot;
+	args1(4).Name = &quot;Hyperlink.Type&quot;
+	args1(4).Value = 1
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:SetHyperlink&quot;, &quot;&quot;, 0, args1())
+
+End Function
+
+&apos; 去掉字串前後面的 &quot; 字元
+Function RA_StripQuote(sString As String, _
+						Optional sLeftQuote As String, _
+						Optional sRightQuote As String) As String
+
+	If (IsMissing(sLeftQuote)) Then
+		sLeftQuote = Chr(34)
+	End If
+
+	If (IsMissing(sRightQuote)) Then
+		sRightQuote = Chr(34)
+	End If
+
+	If (Left(sString, 1) = sLeftQuote) Then
+		sString = Right(sString, Len(sString) - 1)
+	End If
+
+	If (Right(sString, 1) = sRightQuote) Then
+		sString = Left(sString, Len(sString) - 1)
+	End If
+
+	RA_StripQuote = sString
+End Function
+
+Function TypeSetting2Resource(sName As String, sSetting As String) As Object
+	Dim oResource As Object
+	Dim aFields() As String
+	Dim sField As String
+	Dim aFld() As String
+	Dim sTmp As String
+	Dim I As Long
+
+	Set oResource = New ResourceClass
+	oResource.setPrimaryKey(sName)
+
+	aFields = Split(sSetting, &quot;;&quot;)
+	For Each sField In aFields
+		aFld = Split(sField, &quot;:&quot;)
+		If (UBound(aFld) &gt; 0 ) Then
+			&apos; 早期版本手殘
+			If (aFld(0) = &quot;Descript&quot;) Then
+				aFld(0) = &quot;Description&quot;
+			End If
+			oResource.setValue(aFld(0), RA_StripQuote(aFld(1)))
+		End If
+	Next sField
+
+	Set TypeSetting2Resource = oResource
+
+End Function
+
+Function Resource2TypeSetting(oResource As Object) As String
+	Dim aElements() As String
+	Dim sElm As String
+	Dim sSemicolon As String
+	Dim sRet As String
+	Dim I As Long
+	Dim sValue As String
+
+	aElements = Array(&quot;Type&quot;, &quot;Format&quot;, &quot;Items&quot;, &quot;Size&quot;, &quot;Description&quot;, &quot;ApiHelp&quot;)
+	With oResource
+		I = 0
+		For Each sElm In aElements
+			If (.hasByName(sElm)) Then
+				&apos; 把資料中的半型冒號及分號轉換成全型，避免與設定字串用的符號混淆
+				sValue = Tools.Strings.ReplaceString(.getValue(sElm), &quot;：&quot;, &quot;:&quot;)
+				sValue = Tools.Strings.ReplaceString(sValue, &quot;；&quot;, &quot;;&quot;)
+				sSemicolon = IIF(I = 0, &quot;&quot;, &quot;;&quot;)
+				sRet =  sRet &amp; sSemicolon &amp; sElm(I) &amp; &quot;:&quot; &amp; sValue
+				I = I + 1
+			End If
+		Next sElm
+	End With
+	Resource2TypeSetting = sRet
+End Function
+
+&apos; 檢查指定的檔案是否已經開啟
+Function IsDocumentOpened(sURL As String) As Boolean
+	Dim oFrames As Object
+	Dim I As Long
+
+	Set oFrames = StarDesktop.Frames
+	For I = oFrames.getCount() - 1 To 0 Step -1
+		If (oFrames.getByIndex(I).Controller.Model.URL = sURL) Then
+			IsDocumentOpened = True
+			Exit Function
+		End If
+	Next I
+	IsDocumentOpened = False
+
+End Function
+</script:module>

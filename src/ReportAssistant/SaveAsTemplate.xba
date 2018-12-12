@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="SaveAsTemplate" script:language="StarBasic">REM  *****  BASIC  *****
+Option Explicit
+
+Sub Main
+	Dim oDoc As Object
+	Dim bIsNewFile As Boolean
+	Dim sDocType As String
+	Dim sExtName As String
+	Dim oFilePicker As Object
+	Dim oTemplatePath As Object
+	Dim sSaveFile As String
+	Dim oDocProps As Object
+
+	Set oDoc = ThisComponent
+
+	sDocType = Tools.Misc.GetDocumentType(oDoc)	&apos; 取得 DocType
+	Select Case sDocType
+		Case &quot;swriter&quot;
+			sExtName = &quot;.ott&quot;
+		Case &quot;scalc&quot;
+			sExtName = &quot;.ots&quot;
+		Case Else
+			Msgbox(&quot;目前報表範本設計，只支援 Writer 及 Calc 格式&quot;)
+			Exit Sub
+	End Select
+
+	If (oDoc.isReadonly) Then
+		Msgbox(&quot;唯讀檔案無法存檔&quot;)
+		Exit Sub
+	End If
+
+	If (oDoc.hasLocation()) Then
+		Select Case Tools.Strings.GetFileNameExtension(oDoc.Location)
+			Case &quot;ott&quot;, &quot;ots&quot;	&apos; 已經是範本檔，就存檔
+				oDoc.store()
+				Exit Sub
+		End Select
+	End If
+	
+	Set oTemplatePath = getResource(&quot;/Preference/Path/範本目錄&quot;)
+
+	If (oTemplatePath.Value = &quot;&quot;) Then
+		oTemplatePath.Value = USER_WORK_DIR
+	End If
+
+	Set oFilePicker = createUnoService(&quot;com.sun.star.ui.dialogs.OfficeFilePicker&quot;)
+	With oFilePicker
+		.Initialize(Array(com.sun.star.ui.dialogs.TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD))
+		.appendFilter(&quot;範本格式&quot;, &quot;*&quot; &amp; sExtName )
+		.setDisplayDirectory(ConvertToURL(oTemplatePath.Value))
+		.SetDefaultName(Tools.Strings.GetFileNameWithoutExtension(oDoc.Title))
+		.setTitle( &quot;存成報表範本&quot;)
+      	.setValue(com.sun.star.ui.dialogs.ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, 0, true)
+		If (.execute()) Then
+			sSaveFile = .Files(0)
+			oDoc.storeAsURL(sSaveFile, Array())
+		End If
+		.dispose
+	End With
+
+End Sub
+
+</script:module>

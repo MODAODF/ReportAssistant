@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="ResourceDBClass" script:language="StarBasic" script:moduleType="normal">&apos;==================================================
+&apos; 物件
+&apos; Class Name : ResourceDBClass
+&apos;==================================================
+
+Option Compatible
+Option ClassModule
+
+Option Explicit
+
+Private m_RegDB As Object
+Private m_RootKey As Object
+
+&apos; 內部變數
+Private m_sURL As String	&apos; Resource DB Path
+
+&apos; -----------------------------------------------------------------------------------------------------------------------
+&apos; CONSTRUCTORS / DESTRUCTORS						        														---
+&apos; -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Initialize()
+
+	Set m_RegDB = createUnoService(&quot;com.sun.star.registry.SimpleRegistry&quot;)
+	m_sURL = &quot;&quot;
+
+End Sub		&apos;	Constructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Terminate()
+
+End Sub		&apos;	Destructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Public Sub Dispose()
+	Call Class_Terminate()
+End Sub
+
+Property Let URL(ByVal sURL As String)
+	m_sURL = sURL
+	If (Not FileExists(m_sURL)) Then
+		m_RegDB.open(m_sURL, False ,True)
+		m_RegDB.close()
+	End If
+End Property
+
+&apos; 開啟資源檔
+Public Function openDB(Optional ByVal ReadOnly As Boolean)
+
+	If (isMissing(ReadOnly)) Then
+		ReadOnly = False
+	End If
+
+	m_RegDB.open(m_sURL, ReadOnly ,False)
+
+	Set m_RootKey = m_RegDB.getRootKey()
+
+End Function
+
+&apos; -----------------------------------------------------------
+&apos; 取得 Key 資料
+&apos; Arguments :
+&apos;			sKeyName - Key 名稱
+&apos;			bCreate - 不存在是否建立 (True:是, False:不要)
+&apos;
+&apos; Return :
+&apos;			成功的話傳回 ResourceKeyClass 物件，否則是 NULL
+&apos; -----------------------------------------------------------
+Public Function getKey(sKeyName, Optional bAutoCreate As Boolean) As Object
+	Dim oCollection As Object
+	Dim oKey As Object
+	Dim oResKey As Object
+	
+	If (IsMissing(bAutoCreate)) Then
+		bAutoCreate = True
+	End If
+
+	sKeyName = Trim(sKeyName)
+
+	Set oKey = m_RootKey.openKey(sKeyName)
+	If (IsNull(oKey)) Then
+		If (Not bAutoCreate) Then
+			Set getKey = Null
+			Exit Function
+		End If
+		Set oKey = m_RootKey.createKey(sKeyName)
+	End If
+
+	Set oResKey = New ResourceKeyClass
+	oResKey.setData(oKey)	&apos; 紀錄子 Key 資料
+	oKey.closeKey()
+
+	Set getKey = oResKey
+
+End Function
+
+Private Function checkValueType(Value As Variant) As Long
+	Select Case TypeName(Value)
+		Case &quot;Double&quot;, &quot;Single&quot;, &quot;Currency&quot;, &quot;Boolean&quot;, &quot;Date&quot;
+			checkValueType = com.sun.star.registry.RegistryValueType.ASCII
+		Case &quot;Double()&quot;, &quot;Single()&quot;, &quot;Currency()&quot;, &quot;Boolean()&quot;, &quot;Date()&quot;
+			checkValueType = com.sun.star.registry.RegistryValueType.ASCIILIST
+		Case &quot;Long&quot;, &quot;Integer&quot;
+			checkValueType = com.sun.star.registry.RegistryValueType.LONG
+		Case &quot;Long()&quot;, &quot;Integer()&quot;
+			checkValueType = com.sun.star.registry.RegistryValueType.LONGLIST
+		Case &quot;String&quot;
+			checkValueType = com.sun.star.registry.RegistryValueType.STRING
+		Case &quot;String()&quot;
+			checkValueType = com.sun.star.registry.RegistryValueType.STRINGLIST
+		Case Else
+			checkValueType = com.sun.star.registry.RegistryValueType.NOT_DEFINED
+	End Select
+End Function
+
+&apos; 依據 Key 的資料型態，傳回相應內容
+Private Function getKeyValue(oKey As Object) As Variant
+
+	With oKey
+		Select Case (.ValueType)
+			Case com.sun.star.registry.RegistryValueType.LONG
+				getKeyValue = .getLongValue()
+			Case com.sun.star.registry.RegistryValueType.ASCII
+				getKeyValue = .getAsciiValue()
+			Case com.sun.star.registry.RegistryValueType.STRING
+				getKeyValue = .getStringValue()
+			Case com.sun.star.registry.RegistryValueType.BINARY
+				getKeyValue = .getBinaryValue()
+			Case com.sun.star.registry.RegistryValueType.LONGLIST
+				getKeyValue = .getLongListValue()
+			Case com.sun.star.registry.RegistryValueType.ASCIILIST
+				getKeyValue = .getAsciiListValue()
+			Case com.sun.star.registry.RegistryValueType.STRINGLIST
+				getKeyValue = .getStringListValue()
+			Case Else &apos; com.sun.star.registry.RegistryValueType.NOT_DEFINED
+				getKeyValue = &quot;&quot;	&apos; 未定義的話，預設為空字串
+		End Select
+	End With
+
+End Function
+
+Private Function setKeyValue(oProp As com.sun.star.beans.PropertyValue)
+	Dim oKey As Object
+
+	Set oKey = m_RootKey.openKey(oProp.Name)	&apos; 開啟 Key
+	If (IsNull(oKey)) Then
+		Set oKey = m_RootKey.createKey(oProp.Name)	&apos; 沒有就新增
+	End If
+
+	With oKey
+		Select Case checkValueType(oProp.Value)
+			Case com.sun.star.registry.RegistryValueType.LONG
+				.setLongValue(oProp.Value)
+			Case com.sun.star.registry.RegistryValueType.ASCII
+				.setAsciiValue(oProp.Value)
+			Case com.sun.star.registry.RegistryValueType.STRING
+				.setStringValue(oProp.Value)
+			Case com.sun.star.registry.RegistryValueType.BINARY
+				.setBinaryValue(oProp.Value)
+			Case com.sun.star.registry.RegistryValueType.LONGLIST
+				.setLongListValue(oProp.Value)
+			Case com.sun.star.registry.RegistryValueType.ASCIILIST
+				.setAsciiListValue(oProp.Value)
+			Case com.sun.star.registry.RegistryValueType.STRINGLIST
+				.setStringListValue(oProp.Value)
+			Case Else &apos; com.sun.star.registry.RegistryValueType.NOT_DEFINED
+				.setStringValue(&quot;&quot;)		&apos; 未定義的話，預設為空字串
+		End Select
+		.closeKey()
+	End With
+End Function
+
+&apos;------------------------------------------------------
+&apos; 取 Key 名稱，去掉路徑
+&apos;------------------------------------------------------
+Private Function nudeKey(sKeyName As String) As String
+	Dim aKeys() As String
+
+	aKeys = Split(sKeyName, &quot;/&quot;)
+	nudeKey = aKeys(UBound(aKeys))
+End Function
+
+&apos; -----------------------------------------------------------
+&apos; 取得 Key 資料
+&apos; Arguments :
+&apos;			sKeyName - Key 名稱
+&apos;			bCreate - 不存在是否建立 (True:是, False:不要)
+&apos;
+&apos; Return :
+&apos;			成功的話傳回 ResourceClass 物件，否則是 NULL
+&apos; -----------------------------------------------------------
+Public Function getResource(sKeyName, Optional bAutoCreate As Boolean) As Object
+	Dim oKey As Object
+	Dim oSubKey As Object
+	Dim sName As String
+	Dim oResource As Object
+	Dim Value As Variant
+
+	If (IsMissing(bAutoCreate)) Then	&apos; 預設為自動建立
+		bAutoCreate = True
+	End If
+
+	sKeyName = Trim(sKeyName)
+
+	Set oKey = m_RootKey.openKey(sKeyName)
+	If (IsNull(oKey)) Then
+		If (Not bAutoCreate) Then
+			Set getResource = Nothing
+			Exit Function
+		End If
+		Set oKey = m_RootKey.createKey(sKeyName)
+	End If
+
+	Set oResource = New ResourceClass	&apos; 資源物件
+
+	&apos; 設定主 Key
+	oResource.setPrimaryKey(oKey.KeyName)
+	oResource.setValue(oKey.KeyName, Me.getKeyValue(oKey))
+
+	For Each sName In oKey.KeyNames
+		Set oSubKey = m_RootKey.openKey(sName)
+		oResource.setValue(Me.nudeKey(sName), Me.getKeyValue(oSubKey))
+		oSubKey.closeKey()
+	Next 
+
+	Set getResource = oResource
+
+End Function
+
+Function updateResource(oResource As Object)
+	Dim aProps() As Object
+	Dim oProp As com.sun.star.beans.PropertyValue
+	Dim sPrimaryKey As String
+
+	sPrimaryKey = oResource.getPrimaryKey	&apos; 主 Key
+	Set aProps = oResource.getValues()
+
+	For Each oProp In aProps
+		If (Left(oProp.Name, 1) &lt;&gt; &quot;/&quot;) Then
+			oProp.Name = sPrimaryKey &amp; &quot;/&quot; &amp; oProp.Name
+		End If
+		Me.setKeyValue(oProp)
+	Next oProp
+
+End Function
+
+
+Function updateKey(oResKey As Object)
+	Dim oKey As Object
+	Dim oSubKey As Object
+	Dim oResKeys() As Object
+	Dim I As Long
+	Dim sSubName As String
+
+	Set oKey = m_RootKey.openKey(oResKey.getKeyName())
+	If (IsNull(oKey)) Then
+		Exit Function
+	End If
+
+	Set oResKeys = oResKey.getKeys()
+
+	For I = LBound(oResKeys) To UBound(oResKeys)
+		sSubName = oResKeys(I).Name
+		Set oSubKey = oKey.openKey(sSubName)	&apos; 開啟子 Key
+		If (IsNull(oSubKey)) Then
+			oSubKey = oKey.createKey(sSubName)	&apos; 沒有的話新增
+		End If
+
+		Select Case oResKeys(I).Handle
+			Case com.sun.star.registry.RegistryValueType.LONG
+				oSubKey.setLongValue(oResKeys(I).Value)
+			Case com.sun.star.registry.RegistryValueType.ASCII
+				oSubKey.setAsciiValue(oResKeys(I).Value)
+			Case com.sun.star.registry.RegistryValueType.STRING
+				oSubKey.setStringValue(oResKeys(I).Value)
+			Case com.sun.star.registry.RegistryValueType.BINARY
+				oSubKey.setBinaryValue(oResKeys(I).Value)
+			Case com.sun.star.registry.RegistryValueType.LONGLIST
+				oSubKey.setLongListValue(oResKeys(I).Value)
+			Case com.sun.star.registry.RegistryValueType.ASCIILIST
+				oSubKey.setAsciiListValue(oResKeys(I).Value)
+			Case com.sun.star.registry.RegistryValueType.STRINGLIST
+				oSubKey.setStringListValue(oResKeys(I).Value)
+			Case Else	&apos; com.sun.star.registry.RegistryValueType.NOT_DEFINED
+				&apos;msgbox (&quot;undefined Value Type : &quot; &amp; sSubName)
+		End Select
+		oSubKey.closeKey()
+	Next I
+
+	oKey.closeKey()
+End Function
+
+Public Function closeDB()
+	m_RootKey.closeKey()
+	m_RegDB.close()
+End Function
+
+</script:module>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE library:library PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "library.dtd">
+<library:library xmlns:library="http://openoffice.org/2000/library" library:name="ReportAssistant" library:readonly="false" library:passwordprotected="false">
+ <library:element library:name="BindingLineDialog"/>
+ <library:element library:name="AssistantDialog"/>
+ <library:element library:name="WaterMarkDialog"/>
+ <library:element library:name="PreferenceDialog"/>
+ <library:element library:name="ApplyPersonalDialog"/>
+ <library:element library:name="DesignToolsDialog"/>
+</library:library>

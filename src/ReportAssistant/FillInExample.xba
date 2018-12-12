@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="FillInExample" script:language="StarBasic">REM  *****  BASIC  *****
+Option Explicit
+
+Sub Main
+	Dim oDoc As Object
+	Dim bIsNewFile As Boolean
+	Dim sDocType As String
+	Dim sExtName As String
+	Dim oFilePicker As Object
+	Dim oTemplatePath As Object
+	Dim sSaveFile As String
+	Dim oDocProps As Object
+
+	Set oDoc = ThisComponent
+
+	sDocType = Tools.Misc.GetDocumentType(oDoc)	&apos; 取得 DocType
+	Select Case sDocType
+		Case &quot;swriter&quot;
+			sExtName = &quot;.odt&quot;
+&apos;		Case &quot;scalc&quot;
+&apos;			sExtName = &quot;.ods&quot;
+		Case Else
+			Msgbox(&quot;目前只支援 Writer 格式&quot;, MB_ICONSTOP, &quot;不支援&quot;)
+			Exit Sub
+	End Select
+
+	Set oFilePicker = createUnoService(&quot;com.sun.star.ui.dialogs.FilePicker&quot;)
+	With oFilePicker
+		.Initialize(Array(com.sun.star.ui.dialogs.TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD))
+		.appendFilter(&quot;ODF&quot;, &quot;*&quot; &amp; sExtName )
+		.SetDefaultName(Tools.Strings.GetFileNameWithoutExtension(oDoc.Title) &amp; &quot;(範例)&quot;)
+		.setTitle( &quot;匯出填寫範例&quot;)
+      	.setValue(com.sun.star.ui.dialogs.ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, 0, true)
+		If (.execute()) Then
+			sSaveFile = .Files(0)
+			If (IsDocumentOpened(sSaveFile)) Then
+				Msgbox(&quot;檔案已被開啟！請先關掉已開啟的檔案，&quot; &amp; Chr(10) &amp; _
+						&quot;或是指定新的檔名。&quot;, MB_ICONSTOP, &quot;無法存檔&quot;)
+			Else
+				oDoc.storeToURL(sSaveFile, Array())
+				convertFields(sSaveFile)
+			End If
+		End If
+		.dispose
+	End With
+
+End Sub
+
+Private Function convertFields(sFile As String)
+	Dim oDoc As Object
+	Dim oProp(1) As New com.sun.star.beans.PropertyValue
+	Dim oFields As Object
+	Dim oEnum As Object
+	Dim oFld As Object
+
+	oProp(0).Name = &quot;ReadOnly&quot;
+	oProp(0).Value = False
+	oProp(1).Name = &quot;MacroExecutionMode&quot;
+	oProp(1).Value = 4
+
+	oDoc = StarDesktop.loadComponentFromURL(sFile, &quot;_default&quot;, 0, oProp())
+	Set oFields = oDoc.getTextFields()
+
+	With oFields
+		If (.hasElements()) Then
+			Set oEnum = .createEnumeration()
+			Do While oEnum.hasMoreElements
+				convertField(oDoc, oEnum.nextElement())
+			Loop
+			oDoc.store()	&apos; 再存檔一次
+		End If
+	End With
+End Function
+
+Private Function convertField(oDoc as Object, oField As Object)
+	Dim oNew As Object
+	Dim oResource As Object
+	Dim aItems() As String
+	
+	With oField
+		If (Not .supportsService(&quot;com.sun.star.text.TextField.JumpEdit&quot;)) Then
+			Exit Function
+		End If
+		If (Left(.Hint, 5) &lt;&gt; &quot;Type:&quot;) Then
+			Exit Function
+		End If
+
+		Set oResource = TypeSetting2Resource(.PlaceHolder, .Hint)
+
+		Select Case oResource.getValue(&quot;Type&quot;)
+			Case &quot;String&quot;
+				Set oNew = oDoc.createInstance(&quot;com.sun.star.text.TextField.Input&quot;)
+					oNew.Content = &quot;○○○&quot;
+					oNew.Hint = &quot;輸入&quot; &amp; .PlaceHolder
+			Case &quot;Boolean&quot;
+				Set oNew = oDoc.createInstance(&quot;com.sun.star.text.TextField.DropDown&quot;)
+				oNew.Name = .PlaceHolder
+				aItems = Split(oResource.getValue(&quot;Items&quot;), &quot;,&quot;)
+				oNew.Items = Array(aItems(1), aItems(0))
+			Case &quot;Image&quot;
+				Set oNew = oDoc.createInstance(&quot;com.sun.star.text.TextField.JumpEdit&quot;)
+				&apos; https://www.openoffice.org/api/docs/common/ref/com/sun/star/text/PlaceholderType.html
+				oNew.PlaceHolder = .PlaceHolder
+				oNew.PlaceHolderType = com.sun.star.text.PlaceholderType.GRAPHIC
+				oNew.Hint = &quot;點選可以插入圖片&quot;
+			Case &quot;Enum&quot;
+				Set oNew = oDoc.createInstance(&quot;com.sun.star.text.TextField.DropDown&quot;)
+				oNew.Name = .PlaceHolder
+				oNew.Items = Split(&quot;-- 請選擇 --,&quot; &amp; oResource.getValue(&quot;Items&quot;), &quot;,&quot;)
+		End Select
+
+		.Anchor.Text.insertTextContent(.Anchor, oNew, False)
+		.dispose()
+	End With
+End Function
+
+</script:module>

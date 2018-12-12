@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="ToolbarClass" script:language="StarBasic">&apos;==================================================
+&apos; 物件
+&apos; Class Name : ToolbarClass
+&apos;  http://wiki.services.openoffice.org/wiki/Framework/Article/General_Architecture_Of_The_Framework_User_Interface_Implementation
+&apos;
+&apos;==================================================
+
+Option VBASupport 1
+Option Compatible
+Option ClassModule
+Option Explicit
+
+Private Const RESOURCE_PREFIX As String = &quot;private:resource/toolbar/custom_&quot;
+
+Private m_Doc As Object
+Private m_LayoutManager As Object
+Private m_ConfigManager As Object
+Private m_ToolbarIdentify As String
+Private m_Toolbar As Object
+
+&apos; -----------------------------------------------------------------------------------------------------------------------
+&apos; CONSTRUCTORS / DESTRUCTORS						        														---
+&apos; -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Initialize()
+
+	Set m_Doc = ThisComponent
+	Set m_LayoutManager = m_Doc.CurrentController.Frame.LayoutManager
+	Set m_ConfigManager = m_Doc.UIConfigurationManager
+
+	m_ToolbarIdentify = &quot;&quot;
+	Set m_Toolbar = Nothing
+
+End Sub	&apos; Constructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Private Sub Class_Terminate()
+	Dim oElement As Object
+	Set oElement = m_LayoutManager.getElement(m_ToolbarIdentify)
+	If (Not IsNull(oElement)) Then
+		m_LayoutManager.destroyElement(m_ToolbarIdentify)
+		m_ToolbarIdentify = &quot;&quot;
+		Set m_Toolbar = Nothing
+	End If
+End Sub	&apos; Destructor
+
+REM -----------------------------------------------------------------------------------------------------------------------
+Public Sub Dispose()
+	Call Class_Terminate()
+End Sub	&apos; Dispose
+
+Public Function setTitle(sTitle As String)
+	Dim oSettings As Object
+	If (Not IsNull(m_Toolbar)) Then
+		Set oSettings = m_Toolbar.getSettings(True)
+		oSettings.UIName = sTitle &apos; 指定標題名稱
+		m_Toolbar.setSettings(oSettings)
+		m_Toolbar.updateSettings()
+	End If
+End Function	&apos; setTitle
+
+Public Function create(sName As String, Optional sTitle As String) As String
+	Dim oElement As Object
+
+	m_ToolbarIdentify = RESOURCE_PREFIX &amp; Trim(sName)
+	create = m_ToolbarIdentify
+
+	With m_LayoutManager
+		Set oElement = .getElement(m_ToolbarIdentify)
+		If (Not IsNull(oElement)) Then
+			Exit Function
+		End If
+		&apos; 建立新的
+		.createElement(m_ToolbarIdentify)
+		Set m_Toolbar = .getElement(m_ToolbarIdentify)
+	End With	&apos; m_LayoutManager
+
+	If (Not IsMissing(sTitle)) Then
+		Me.setTitle(sTitle)
+	End If
+
+End Function	&apos; create
+
+Public Function addCommandButton(sLabel As String, Optional sCommandURL As String)
+	Dim aButton(4) as new com.sun.star.beans.PropertyValue
+	Dim oSettings As Object
+
+	If (IsNull(m_Toolbar)) Then
+		Exit Function
+	End If
+
+	If (IsMissing(sCommandURL)) Then
+		sCommandURL = &quot;&quot;
+	End If
+
+	aButton(0).Name = &quot;Type&quot;
+	aButton(0).Value = com.sun.star.ui.ItemType.DEFAULT
+	aButton(1).Name = &quot;Label&quot;
+	aButton(1).Value = sLabel
+	aButton(2).Name = &quot;CommandURL&quot;
+	aButton(2).Value = sCommandURL
+	aButton(3).Name = &quot;Style&quot;
+	aButton(3).Value = com.sun.star.ui.ItemStyle.AUTO_SIZE
+	aButton(4).Name = &quot;IsVisible&quot;
+	aButton(4).Value = True
+	
+	Set oSettings = m_Toolbar.getSettings(True)
+	oSettings.insertByIndex(oSettings.Count, aButton())
+	m_Toolbar.setSettings(oSettings)
+	m_Toolbar.updateSettings()
+
+End Function	&apos; addCommandButton
+
+Public Function addDropDownButton(sLabel As String, Optional sCommandURL As String)
+	Dim aButton(5) as new com.sun.star.beans.PropertyValue
+	Dim oSettings As Object
+
+	If (IsNull(m_Toolbar)) Then
+		Exit Function
+	End If
+
+	If (IsMissing(sCommandURL)) Then
+		sCommandURL = &quot;&quot;
+	End If
+
+	aButton(0).Name = &quot;Type&quot;
+	aButton(0).Value = com.sun.star.ui.ItemType.DEFAULT
+	aButton(1).Name = &quot;Label&quot;
+	aButton(1).Value = sLabel
+	aButton(2).Name = &quot;CommandURL&quot;
+	aButton(2).Value = sCommandURL
+	aButton(3).Name = &quot;Style&quot;
+	aButton(3).Value = com.sun.star.ui.ItemStyle.DROP_DOWN
+	aButton(4).Name = &quot;IsVisible&quot;
+	aButton(4).Value = True
+	
+
+	Dim oSub As Object
+	Dim abc(3) As new com.sun.star.beans.PropertyValue
+	abc(0).Name = &quot;CommandURL&quot;
+	abc(0).Value = &quot;macro:///haha&quot;
+	abc(1).Name = &quot;Label&quot;
+	abc(1).Value = &quot;選項一&quot;
+	abc(2).Name = &quot;Type&quot;
+	abc(2).Value = com.sun.star.ui.ItemType.DEFAULT
+	abc(3).Name = &quot;Style&quot;
+	abc(3).Value = com.sun.star.ui.ItemStyle.AUTO_SIZE
+
+	Set oSettings = m_Toolbar.getSettings(True)
+	oSub = oSettings.createInstanceWithContext(GetDefaultContext())
+	oSub.insertByIndex(oSub.Count, abc())
+	aButton(5).Name = &quot;ItemDescriptorContainer&quot;
+	aButton(5).Value = oSub
+
+	oSettings.insertByIndex(oSettings.Count, aButton())
+	m_Toolbar.setSettings(oSettings)
+	m_Toolbar.updateSettings()
+
+End Function	&apos; addDropDownButton
+
+Public Function addSeparatorLine()
+	Me._addSeparator(com.sun.star.ui.ItemType.SEPARATOR_LINE)
+End Function
+
+Public Function addSeparatorSpace()
+	Me._addSeparator(com.sun.star.ui.ItemType.SEPARATOR_SPACE)
+End Function
+
+Public Function addSeparatorLineBreak()
+	Me._addSeparator(com.sun.star.ui.ItemType.SEPARATOR_LINEBREAK)
+End Function
+
+Private Function _addSeparator(nType As Integer)
+	Dim aSeparator(0) as new com.sun.star.beans.PropertyValue
+	Dim oSettings As Object
+
+	If (IsNull(m_Toolbar)) Then
+		Exit Function
+	End If
+
+	aSeparator(0).Name = &quot;Type&quot;
+	aSeparator(0).Value = nType
+
+	Set oSettings = m_Toolbar.getSettings(True)
+	oSettings.insertByIndex(oSettings.Count, aSeparator())
+	m_Toolbar.setSettings(oSettings)
+	m_Toolbar.updateSettings()
+End Function	&apos; _addSeparator
+
+Public Function show()
+	m_LayoutManager.floatWindow(m_ToolbarIdentify)
+	m_LayoutManager.showElement(m_ToolbarIdentify)
+End Function	&apos; show
+
+</script:module>

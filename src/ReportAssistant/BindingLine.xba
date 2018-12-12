@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="BindingLine" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+
+Option Explicit
+
+Private Const MASTER_KEY = &quot;/BindingLine&quot;
+
+Sub Main
+	Dim oBindingLine As Object
+	Dim oDialog As Object
+	Dim oProps As Object
+
+	Set oBindingLine = New BindingLineClass
+    Set oDialog = loadDialog(&quot;BindingLineDialog&quot;)
+
+	Set oProps = getResource(MASTER_KEY)
+	With oProps
+		If (.getValue(&quot;顯示字串&quot;) = &quot;&quot;) Then
+			.setValue(&quot;顯示字串&quot;, oBindingLine.String)
+			.setValue(&quot;顏色&quot;, oBindingLine.Color)
+			.setValue(&quot;字型名稱&quot;, oBindingLine.FontName)
+			.setValue(&quot;字型大小&quot;, oBindingLine.FontSize)
+			.setValue(&quot;插入頁&quot;, oBindingLine.DrawType)
+			.setValue(&quot;頁面位置&quot;, oBindingLine.Position)
+			.setValue(&quot;邊距&quot;, oBindingLine.Boundary)
+		Else
+			oBindingLine.String = .getValue(&quot;顯示字串&quot;)
+			oBindingLine.Color = .getValue(&quot;顏色&quot;)
+			oBindingLine.FontName = .getValue(&quot;字型名稱&quot;)
+			oBindingLine.FontSize = .getValue(&quot;字型大小&quot;)
+			oBindingLine.DrawType = .getValue(&quot;插入頁&quot;)
+			oBindingLine.Position = .getValue(&quot;頁面位置&quot;)
+			oBindingLine.Boundary = .getValue(&quot;邊距&quot;)
+		End If
+	End With
+
+	With oDialog
+		.getControl(&quot;String&quot;).Text = oBindingLine.String
+		.getControl(&quot;ColorLabel&quot;).Model.BackgroundColor = oBindingLine.Color
+		.getControl(&quot;FontName&quot;).Model.StringItemList = getFontList()
+		.getControl(&quot;FontName&quot;).Text = oBindingLine.FontName
+		.getControl(&quot;FontSize&quot;).Text = oBindingLine.FontSize
+
+		Select Case oBindingLine.DrawType
+			Case BindingLine_Draw_FIRST_PAGE
+				.getControl(&quot;FirstPage&quot;).State = True
+			Case BindingLine_Draw_CURRENT_PAGE
+				.getControl(&quot;CurrentPage&quot;).State = True
+			Case BindingLine_Draw_ALL_PAGES
+				.getControl(&quot;AllPages&quot;).State = True
+		End Select
+
+		Select Case oBindingLine.Position
+			Case BindingLine_Position_PAGE_LEFT
+				.getControl(&quot;PageLeft&quot;).State = True
+			Case BindingLine_Position_PAGE_RIGHT
+				.getControl(&quot;PageRight&quot;).State = True
+			Case BindingLine_Position_PAGE_TOP
+				.getControl(&quot;PageTop&quot;).State = True
+			Case BindingLine_Position_PAGE_BOTTOM
+				.getControl(&quot;PageBottom&quot;).State = True
+		End Select
+
+		.getControl(&quot;Boundary&quot;).Value = oBindingLine.Boundary
+
+		ppp(oDialog)
+
+    	If (.execute() = 1) Then
+    		oBindingLine.String = .getControl(&quot;String&quot;).Text
+			oBindingLine.Color = .getControl(&quot;ColorLabel&quot;).Model.BackgroundColor
+			oBindingLine.FontName = .getControl(&quot;FontName&quot;).Text
+			oBindingLine.FontSize = .getControl(&quot;FontSize&quot;).Text
+
+			If (.getControl(&quot;FirstPage&quot;).State) Then
+				oBindingLine.DrawType = BindingLine_Draw_FIRST_PAGE
+			ElseIf (.getControl(&quot;CurrentPage&quot;).State) Then
+				oBindingLine.DrawType = BindingLine_Draw_CURRENT_PAGE
+			ElseIf (.getControl(&quot;AllPages&quot;).State) Then
+				oBindingLine.DrawType = BindingLine_Draw_ALL_PAGES
+			End If
+
+			If (.getControl(&quot;PageLeft&quot;).State) Then
+				oBindingLine.Position = BindingLine_Position_PAGE_LEFT
+			ElseIf (.getControl(&quot;PageRight&quot;).State) Then
+				oBindingLine.Position = BindingLine_Position_PAGE_RIGHT
+			ElseIf (.getControl(&quot;PageTop&quot;).State) Then
+				oBindingLine.Position = BindingLine_Position_PAGE_TOP
+			ElseIf (.getControl(&quot;PageBottom&quot;).State) Then
+				oBindingLine.Position = BindingLine_Position_PAGE_BOTTOM
+			End if
+			
+			oBindingLine.Boundary = .getControl(&quot;Boundary&quot;).Value
+			oBindingLine.go()
+			With oProps
+				.setValue(&quot;顯示字串&quot;, oBindingLine.String)
+				.setValue(&quot;顏色&quot;, oBindingLine.Color)
+				.setValue(&quot;字型名稱&quot;, oBindingLine.FontName)
+				.setValue(&quot;字型大小&quot;, oBindingLine.FontSize)
+				.setValue(&quot;插入頁&quot;, oBindingLine.DrawType)
+				.setValue(&quot;頁面位置&quot;, oBindingLine.Position)
+				.setValue(&quot;邊距&quot;, oBindingLine.Boundary)
+			End With
+			updateResource(oProps)
+    	End If
+
+		.dispose()
+
+	End With
+
+	oProps.dispose()
+
+End Sub
+
+Sub insertLeft()
+	insertPosition(BindingLine_Position_PAGE_LEFT)
+End Sub
+
+Sub insertRight()
+	insertPosition(BindingLine_Position_PAGE_RIGHT)
+End Sub
+
+Sub insertTop()
+	insertPosition(BindingLine_Position_PAGE_TOP)
+End Sub
+
+Sub insertBottom()
+	insertPosition(BindingLine_Position_PAGE_BOTTOM)
+End Sub
+
+Private Function insertPosition(sPos As String)
+	Dim oBindingLine As Object
+	Dim oResource As Object
+
+	Set oResource = getResource(MASTER_KEY)
+
+	Set oBindingLine = New BindingLineClass
+	&apos; 插在游標所在頁
+	With oBindingLine
+		.Position = sPos
+		.DrawType = BindingLine_Draw_CURRENT_PAGE
+		If (oResource.getValue(&quot;顯示字串&quot;) &lt;&gt; &quot;&quot;) Then
+			.String = oResource.getValue(&quot;顯示字串&quot;)
+			.Color = oResource.getValue(&quot;顏色&quot;)
+			.FontName = oResource.getValue(&quot;字型名稱&quot;)
+			.FontSize = oResource.getValue(&quot;字型大小&quot;)
+			.Boundary = oResource.getValue(&quot;邊距&quot;)
+		End If
+		.go()
+		.dispose()
+	End With
+
+End Function
+
+Sub ColorPicker(oEvent As Object)
+	Dim oSource As Object
+	Dim oPicker As Object
+	Dim aProps() As Object
+
+	Set oSource = oEvent.Source
+	oPicker = CreateUnoService(&quot;com.sun.star.ui.dialogs.ColorPicker&quot;)
+	With oPicker
+		&apos;.setTitle(&quot;選擇顏色&quot;)
+		aProps = .getPropertyValues()
+		aProps(0).Value = oSource.Model.BackgroundColor
+		.setPropertyValues(aProps)
+		If (.execute = com.sun.star.ui.dialogs.ExecutableDialogResults.OK) Then
+			oSource.Model.BackgroundColor = .PropertyValues(0).Value
+			ppp(oSource.getContext())
+		End If
+		.dispose()
+	End With
+End Sub
+
+Sub setPreview(oEvent As Object)
+	ppp(oEvent.Source.getContext)
+End Sub
+
+Private Sub ppp(oDialog As Object)
+	Dim oPreViewModel As Object
+	Dim sString As String
+	Dim sExample As String
+	Dim I As Long
+
+	With oDialog
+		Set oPreViewModel = .getControl(&quot;Preview&quot;).Model
+		oPreViewModel.TextColor = .getControl(&quot;ColorLabel&quot;).Model.BackgroundColor
+		oPreViewModel.FontName = .getControl(&quot;FontName&quot;).Text
+		oPreViewModel.FontHeight = Val(.getControl(&quot;FontSize&quot;).Text)
+		sString = .getControl(&quot;String&quot;).Text
+		sExample = &quot;------&quot;
+		For I = 1 To Len(sString)
+			sExample = sExample &amp; Mid(sString, I, 1)  &amp; &quot;------&quot;
+		Next I
+		oPreViewModel.Label = sExample
+	End With
+End Sub
+
+</script:module>

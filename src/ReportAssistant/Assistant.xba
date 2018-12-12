@@ -1,0 +1,831 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE script:module PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "module.dtd">
+<script:module xmlns:script="http://openoffice.org/2000/script" script:name="Assistant" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
+Option Explicit
+
+Private oAssistantDlg As Object
+Private aTypes(10) As Object
+Private IsRunning As Boolean
+
+Const TYPE_NORMAL	As String = &quot;可為任意文字或數值資料。&quot;
+Const TYPE_BOOLEAN	As String = &quot;&apos;true&apos;或&apos;false&apos;。&quot;
+Const TYPE_IMAGE	As String = &quot;一般常見的圖片格式轉成 Base64 格式傳送。&quot;
+Const TYPE_ENUM		As String = &quot;從 1 開始的正整數。對應列舉清單，依據數字顯示對應的項目。&quot;
+
+Type NumberFormatType
+	FormatName	As String
+	ImageUrl	As String
+	ValueType	As String
+	BaseKey		As Long
+	DefaultKey	As Long
+	ValueName	As String
+	SpecialData As String
+	Description As String
+End Type
+
+Sub Main
+	Dim oDisposeListener As Object
+	Dim aType As Object
+	Dim I As Long
+
+	For I = LBound(aTypes) To UBound(aTypes)
+		aTypes(I) = createObject(&quot;NumberFormatType&quot;)
+		Select Case I
+			Case 0
+				aTypes(I).FormatName	= &quot;一般&quot;
+				aTypes(I).ValueType		= &quot;auto&quot;
+				aTypes(I).BaseKey		= 0
+				aTypes(I).DefaultKey	= 0
+				aTypes(I).ValueName		= &quot;&quot;
+				aTypes(I).Description	= &quot;可為任意文字或數值資料。&quot;
+			Case 1
+				aTypes(I).FormatName	= &quot;數字&quot;
+				aTypes(I).ValueType		= &quot;float&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.NUMBER
+				aTypes(I).DefaultKey	= 2
+				aTypes(I).ValueName		= &quot;value&quot;
+				aTypes(I).Description	= &quot;可帶小數的數值資料。&quot;
+			Case 2
+				aTypes(I).FormatName	= &quot;百分比&quot;
+				aTypes(I).ValueType		= &quot;percentage&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.PERCENT
+				aTypes(I).DefaultKey	= 11
+				aTypes(I).ValueName		= &quot;value&quot;
+				aTypes(I).Description	= &quot;可帶小數的數值資料。如 0.32 表示 32%、1.5 表示 150%...&quot;
+			Case 3
+				aTypes(I).FormatName	= &quot;貨幣&quot;
+				aTypes(I).ValueType		= &quot;currency&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.CURRENCY
+				aTypes(I).DefaultKey	= 104
+				aTypes(I).ValueName		= &quot;value&quot;
+				aTypes(I).Description	= &quot;可帶小數的數值資料。&quot;
+			Case 4
+				aTypes(I).FormatName	= &quot;日期&quot;
+				aTypes(I).ValueType		= &quot;date&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.DATE
+				aTypes(I).DefaultKey	= 30
+				aTypes(I).ValueName		= &quot;date-value&quot;
+				aTypes(I).Description	= &quot;一律用ISO8601格式表示。如(2018-8-5)。&quot;
+			Case 5
+				aTypes(I).FormatName	= &quot;時間&quot;
+				aTypes(I).ValueType		= &quot;time&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.TIME
+				aTypes(I).DefaultKey	= 41
+				aTypes(I).ValueName		= &quot;time-value&quot;
+				aTypes(I).Description	= &quot;一律用ISO8601格式表示。如 13:09:45 格式為&apos;PT13H09M45S&apos;。&quot;
+			Case 6
+				aTypes(I).FormatName	= &quot;日期/時間&quot;
+				aTypes(I).ValueType		= &quot;date&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.DATETIME
+				aTypes(I).DefaultKey	= 50
+				aTypes(I).ValueName		= &quot;date-value&quot;
+				aTypes(I).Description	= &quot;一律用ISO8601格式表示。如2018年8月5日 13:09:45格式為&apos;2018-8-5T13:09:45&apos;。&quot;
+			Case 7
+				aTypes(I).FormatName	= &quot;科學&quot;
+				aTypes(I).ValueType		= &quot;float&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.SCIENTIFIC
+				aTypes(I).DefaultKey	= 61
+				aTypes(I).ValueName		= &quot;value&quot;
+				aTypes(I).Description	= &quot;可帶小數的數值資料。&quot;
+			Case 8
+				aTypes(I).FormatName	= &quot;分數&quot;
+				aTypes(I).ValueType		= &quot;float&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.FRACTION
+				aTypes(I).DefaultKey	= 70
+				aTypes(I).ValueName		= &quot;value&quot;
+				aTypes(I).Description	= &quot;可帶小數的數值資料。&quot;
+			Case 9
+				aTypes(I).FormatName	= &quot;布林值&quot;
+				aTypes(I).ValueType		= &quot;boolean&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.LOGICAL
+				aTypes(I).DefaultKey	= 99
+				aTypes(I).ValueName		= &quot;boolean-value&quot;
+				aTypes(I).Description	= &quot;&apos;true&apos; 或 &apos;false&apos;&quot;
+			Case 10
+				aTypes(I).FormatName	= &quot;文字&quot;
+				aTypes(I).ValueType		= &quot;string&quot;
+				aTypes(I).BaseKey		= com.sun.star.util.NumberFormat.TEXT
+				aTypes(I).DefaultKey	= 100
+				aTypes(I).ValueName		= &quot;&quot;
+				aTypes(I).Description	= &quot;一般文字。&quot;
+		End Select
+	Next I
+
+	&apos; 確保只有一個 Dialog 被執行
+	If (Not DialogIsRunning(oAssistantDlg)) Then
+		IsRunning = True
+		Set oDisposeListener = CreateUnoListener(_
+							&quot;AssistantDialog_&quot;, &quot;com.sun.star.lang.XEventListener&quot;)
+		Set oAssistantDlg =  LoadModelessDialog(LIB_NAME, &quot;AssistantDialog&quot;)
+
+		With oAssistantDlg
+			With .Model
+				.Step = 1
+				.Tag = Tools.Misc.GetDocumentType(ThisComponent)
+				.ReportAssistantButton.ImageURL = getIconURL(&quot;design-icon.png&quot;)
+				.ParagraphStylesButton.ImageURL = getIconURL(&quot;paragraph-icon.png&quot;)
+				.NumberingStylesButton.ImageURL = getIconURL(&quot;numbering-icon.png&quot;)
+				.PersonalButton.ImageURL = getIconURL(&quot;personal-information-icon.png&quot;)
+				.WaterMarkButton.ImageURL = getIconURL(&quot;watermark-icon.png&quot;)
+				.BindingLineButton.ImageURL = getIconURL(&quot;stapler-icon.png&quot;)
+				If (.Tag = &quot;scalc&quot;) Then
+					.StringType.Label = &quot;格~式&quot;
+					.AdvanceSetting.EnableVisible = True
+					.FormatList.EnableVisible = True
+					.DelField.EnableVisible = False
+
+					.ParagraphStylesButton.Enabled = False
+					.NumberingStylesButton.Enabled = False
+					.WaterMarkButton.Enabled = False
+					.BindingLineButton.Enabled = False
+				Else
+					.StringType.Label = &quot;一~般&quot;
+					.AdvanceSetting.EnableVisible = False
+					.FormatList.EnableVisible = False
+					.DelField.EnableVisible = True
+
+					.ParagraphStylesButton.Enabled = True
+					.NumberingStylesButton.Enabled = True
+					.WaterMarkButton.Enabled = True
+					.BindingLineButton.Enabled = True
+				End If
+			End With	&apos; Model
+
+			RA_ClearAssistantDialog()
+
+			With .getControl(&quot;FormatList&quot;).Model
+				I = 0
+				For Each aType In aTypes
+					.insertItemText(I, aType.FormatName)
+					.setItemData(I, aType)
+					I = I + 1
+				Next aType
+			End With
+			.addEventListener(oDisposeListener)
+			.setVisible(True)
+			RA_SEL_selectionChanged()
+			&apos; 加入標記偵測
+			RA_registerSelectionChenge(ThisComponent)
+			Do While IsRunning
+				&apos; 如果文件被關掉，Dialog.Visible 會被設成 False
+				IsRunning = .isVisible()
+				Wait 200
+			Loop
+			.setVisible(False)
+		End With	&apos; oAssistantDlg
+	Else
+		Msgbox(&quot;範本設計精靈執行中&quot;)
+	End If
+
+End Sub
+
+Function AssistantDialog_disposing(oEvent As com.sun.star.lang.EventObject)
+	RA_unRegisterSelectionChenge(ThisComponent)
+	IsRunning = False
+End Function
+
+
+&apos; 清除
+Function RA_ClearAssistantDialog()
+	With oAssistantDlg.Model
+		.InsertBtn.Label = &quot;插入文件(~I)&quot;
+		.InsertBtn.Enabled = False
+		.DelField.Enabled = False
+		.Description.Text = &quot;&quot;
+		With .FieldName
+			.Text = &quot;&quot;
+			.removeAllItems()
+			.Tag = &quot;&quot;
+		End With
+		Type_Change()
+		RA_SetDetailArea(False)
+	End With
+End Function
+
+Function RA_SetDetailArea(bSW As Boolean)
+
+	With oAssistantDlg
+		With .getControl(&quot;DetailFrame&quot;)
+			.setEnable(bSW)
+		End With
+		With .getControl(&quot;DetailText&quot;)
+			.setEnable(bSW)
+			.setText(&quot;&quot;)
+			.setVisible(bSW)
+		End With
+		With .getControl(&quot;DetailButton&quot;)
+			.setEnable(False)
+			.setVisible(bSW)
+		End With
+	End With
+
+End Function
+
+&apos;
+Function FieldName_OnChange(oEvent as Object)
+
+	With oAssistantDlg.Model
+		RA_Button_OnOff(.FieldName, .InsertBtn)
+	End With
+
+End Function
+
+Function DetailText_OnChange(oEvent As Object)
+	With oAssistantDlg.Model
+		RA_Button_OnOff(.DetailText, .DetailButton)
+	End With
+End Function
+
+
+Function Item_OnChange(oEvent As Object)
+	With oAssistantDlg.Model
+		RA_Button_OnOff(.Item, .AddBtn)
+	End With
+End Function
+
+Function InsertBtn_Click()
+	Dim sTmp As String
+
+	sTmp = Trim(oAssistantDlg.Model.FieldName.Text)
+	If (Len(sTmp) = 0 ) Then
+		MsgBox &quot;欄位名稱必須輸入&quot;
+		Exit Function
+	End If
+
+	RA_InsertField()	&apos; 插入或更新欄位
+	RA_ClearAssistantDialog()
+
+End Function
+
+Public Function AdvanceSetting_Click(oEvent As Object)
+
+	Select Case oAssistantDlg.Model.Tag
+		Case &quot;swriter&quot;
+		Case &quot;scalc&quot;
+			Dim document   as object
+			Dim dispatcher as Object
+			document   = ThisComponent.CurrentController.Frame
+			dispatcher = createUnoService(&quot;com.sun.star.frame.DispatchHelper&quot;)
+			dispatcher.executeDispatch(document, &quot;.uno:FormatCellDialog&quot;, &quot;&quot;, 0, Array())
+			SyncFormatList()
+	End Select
+End Function
+
+
+&apos; 插入或更新欄位
+Function RA_InsertField()
+	Dim oResource As Object
+	Dim sTmp$
+	Dim sFieldText$, sHint$
+	Dim sType$, sFormat$, sSize$, sItems$, sDescription$, sApiHelp$
+	Dim nPos As Long
+	Dim oField As Object
+	Dim oCell As Object
+
+	With oAssistantDlg
+
+		If (.Model.Tag = &quot;scalc&quot;) Then
+			&apos; 自己抓目前選擇的 Cell
+			Set oCell = ThisComponent.currentSelection
+			&apos; 單一 Cell 才行
+			If (Not oCell.supportsService(&quot;com.sun.star.sheet.SheetCell&quot;)) Then
+				Msgbox(&quot;欄位只能插入單一儲存格中&quot;)
+				Exit Function
+			End If
+		End If
+
+		Set oResource = New ResourceClass
+		
+		sFieldText = Trim(.getControl(&quot;FieldName&quot;).getText())
+		oResource.setPrimaryKey(sFieldText)
+
+		sType = &quot;&quot;
+		sFormat = &quot;&quot;
+		sSize = &quot;&quot;
+		sItems = &quot;&quot;
+		sDescription = &quot;&quot;
+		sApiHelp = &quot;&quot;
+
+		If (.getControl(&quot;StringType&quot;).State) Then
+			If (.Model.Tag = &quot;scalc&quot;) Then
+				sType = getCellType(oCell, sFormat, sApiHelp)
+			Else
+				sType = &quot;String&quot;
+				sApiHelp = TYPE_NORMAL
+			End If
+		ElseIf (.getControl(&quot;BooleanType&quot;).State) Then
+			sType = &quot;Boolean&quot;
+			sItems = Trim(.getControl(&quot;BooleanTrueItem&quot;).getText()) &amp; &quot;,&quot; &amp; _
+					Trim(.getControl(&quot;BooleanFalseItem&quot;).getText())
+			sApiHelp = TYPE_BOOLEAN
+		ElseIf (.getControl(&quot;ImageType&quot;).State) Then
+			sType = &quot;Image&quot;
+			sSize = .getControl(&quot;WidthFld&quot;).getText() &amp; &quot;x&quot; &amp; _
+					.getControl(&quot;HeightFld&quot;).getText()
+			sApiHelp = TYPE_IMAGE
+		ElseIf (.getControl(&quot;EnumType&quot;).State) Then
+			sType = &quot;Enum&quot;
+			sItems = Join(.getControl(&quot;ItemList&quot;).model.StringItemList, &quot;,&quot;)
+			sApiHelp = TYPE_ENUM
+		Else
+			MsgBox &quot;欄位型態未指定！&quot;
+			Exit Function
+		EndIf
+
+		oResource.setValue(&quot;Type&quot;, sType)
+		If (sFormat &lt;&gt; &quot;&quot;) Then
+			oResource.setValue(&quot;Format&quot;, sFormat)
+		End If
+		If (sItems &lt;&gt; &quot;&quot;) Then
+			oResource.setValue(&quot;Items&quot;, sItems)
+		End If
+		If (sSize &lt;&gt; &quot;&quot;) Then
+			oResource.setValue(&quot;Size&quot;, sSize)
+		End If
+		oResource.setValue(&quot;Description&quot;, Trim(.getControl(&quot;Description&quot;).getText())
+		oResource.setValue(&quot;ApiHelp&quot;, sApiHelp)
+
+		&apos; 組成Type
+		sHint = Resource2TypeSetting(oResource)
+
+		With .Model.FieldName
+			&apos; 新增
+			If (.ItemCount = 0 OR .Tag = &quot;&quot;) Then
+				RA_MakeField(ThisComponent, sFieldText, sHint)
+			Else &apos; 更新
+				nPos = Val(.Tag)
+				Set oField = .getItemData(nPos)
+				Select Case RA_GetFieldType(oField)
+					Case &quot;JumpEdit&quot;
+						oField.PlaceHolder = sFieldText
+						oField.Hint = sHint
+					Case &quot;URL&quot;
+						oField.Representation = sFieldText
+						oField.TargetFrame = sHint
+				Case Else
+					MsgBox &quot;未知欄位 → &quot; &amp; RA_GetFieldType(oField)
+					Exit Function
+				End Select
+			End If
+		End With
+	End With &apos; oAssistantDlg
+
+End Function
+
+&apos; 刪除欄位
+Function RA_DelField()
+	Dim nPos As Long
+	Dim oField As Object
+
+	With oAssistantDlg.Model.FieldName
+		nPos = Val(.Tag)
+		Set oField = .getItemData(nPos)
+		oField.dispose()
+	End With
+	RA_ClearAssistantDialog()
+End Function
+
+Function getCellType(oCell As Object, ByRef sFormat, ByRef sApiHelp) As String
+	Dim oFormats As Object
+	Dim oKey As Object
+	Dim nNumberFormat As Long
+	Dim nUserDefined As Long
+	Dim oType As Object
+
+	sFormat = &quot;&quot;
+	sApiHelp = aTypes(0).Description
+	getCellType = &quot;auto&quot;
+
+	nNumberFormat = oCell.NumberFormat
+	If (nNumberFormat = 0) Then
+		Exit Function
+	End If
+
+	Set oFormats = ThisComponent.getNumberFormats()
+	Set oKey = oFormats.getByKey(nNumberFormat)
+	nUserDefined = IIF(oKey.UserDefined, com.sun.star.util.NumberFormat.DEFINED, 0)
+
+	For Each oType In aTypes
+		If (oType.BaseKey = oKey.Type - nUserDefined) Then
+			getCellType = oType.ValueType
+			sApiHelp = oType.Description
+			If (oType.ValueName &lt;&gt; &quot;&quot;) Then
+				sFormat = oType.ValueName
+			End If
+			&apos; 貨幣
+			&apos;If (oKey.CurrencyAbbreviation &lt;&gt; &quot;&quot;) Then
+			&apos;	getCellType = getCellType &amp; &quot;&quot;
+			&apos;End If
+			Exit Function
+		End If
+	Next oType
+End Function
+
+Function SyncFormatList(Optional oCell As Object)
+	Dim oSelection As Object
+	Dim I As Long
+	Dim oFormats As Object
+	Dim oKey As Object
+	Dim oFList As Object
+	Dim nNumberFormat As Long
+	Dim nUserDefined As Long
+
+	&apos; 如果沒有傳 Cell 物件
+	If (isMissing(oCell)) Then
+		&apos; 自己抓目前選擇的 Cell
+		Set oSelection = ThisComponent.currentSelection
+		&apos; 單一 Cell 才行
+		If (Not oSelection.supportsService(&quot;com.sun.star.sheet.SheetCell&quot;)) Then
+			Exit Function
+		End If
+		Set oCell = oSelection
+	End If
+
+	nNumberFormat = oCell.NumberFormat
+	Set oFList = oAssistantDlg.getControl(&quot;FormatList&quot;)
+	If (nNumberFormat = 0) Then
+		oFList.selectItemPos(0, True)
+		Exit Function
+	End If
+
+	Set oFormats = ThisComponent.getNumberFormats()
+	Set oKey = oFormats.getByKey(oCell.NumberFormat)
+
+	nUserDefined = IIF(oKey.UserDefined, com.sun.star.util.NumberFormat.DEFINED, 0)
+
+	With oAssistantDlg
+		Set oFList = .getControl(&quot;FormatList&quot;)
+		With oFList.Model
+			For I = 0 To .ItemCount - 1
+				If (.getItemData(I).BaseKey = oKey.Type - nUserDefined) Then
+					oFList.selectItemPos(I, True)
+					Exit For
+				End If
+			Next I
+			If (I &gt;= .ItemCount) Then
+				.getItemData(9).BaseKey
+				Debug oKey
+			End If
+		End With
+
+	End With
+
+End Function
+
+Function ShowApiHelp(sString As String)
+	oAssistantDlg.getControl(&quot;API_Help&quot;).Text = sString
+End Function
+
+Function FormatList_change(oEvent As com.sun.star.awt.ItemEvent)
+	Dim oSelection As Object
+	Dim oFList As Object
+	Dim oType As Object
+
+	Set oSelection = ThisComponent.currentSelection
+	If (Not oSelection.supportsService(&quot;com.sun.star.sheet.SheetCell&quot;)) Then
+		Exit Function
+	End If
+
+	Set oFList = oEvent.Source
+	With oFList.Model
+		Set oType = .getItemData(oEvent.Selected)
+		oSelection.NumberFormat = oType.DefaultKey
+		ShowApiHelp(oType.Description)
+	End With
+	
+End Function
+
+Private Function m_ShowFormatListApiHelp()
+	Dim oType As Object
+
+	With oAssistantDlg.Model.FormatList
+		If (UBound(.SelectedItems) &gt;= 0) Then
+			Set oType = .getItemData(.SelectedItems(0))
+			ShowApiHelp(oType.Description)
+		End If
+	End With
+End Function
+
+Function DetailButton_OnClick(oEvent As Object)
+
+	Dim oDoc As Object
+	Dim sDocType As String
+
+	Set oDoc = ThisComponent
+	sDocType = Tools.Misc.getDocumentType(oDoc)
+
+	Select Case oAssistantDlg.Model.Tag
+		Case &quot;swriter&quot;
+			RA_MakeAnnotationField(ThisComponent, _
+							oAssistantDlg.getControl(&quot;DetailText&quot;).getText())
+		Case &quot;scalc&quot;
+			Dim oSheet As Object
+			Dim oSelection As Object
+			Dim oRangeAddr As Object
+			Dim oCellAddress As New com.sun.star.table.CellAddress
+			Dim oAnnotations As Object
+			Dim I As Long
+			Dim oAnno As Object
+			Dim bFound As boolean
+
+			Set oSelection = oDoc.CurrentSelection
+			Set oSheet = oSelection.Spreadsheet
+			Set oRangeAddr = oSelection.RangeAddress
+			Set oAnnotations = oSheet.Annotations
+
+			&apos; 設定群組
+			oSheet.group(oRangeAddr, com.sun.star.table.TableOrientation.ROWS)
+
+			&apos; 插入註解當作名稱(在群組第一列第一格)
+			oCellAddress.Sheet = oRangeAddr.Sheet
+			oCellAddress.Column = 0
+			oCellAddress.Row = oRangeAddr.StartRow
+			oAnnotations.insertNew(oCellAddress, _
+							oAssistantDlg.getControl(&quot;DetailText&quot;).getText())
+			bFound = False
+			For I = 0 To oAnnotations.getCount() - 1
+				Set oAnno =  oAnnotations.getByIndex(I)
+				If (oAnno.Position.Row = oCellAddress.Row And _
+					oAnno.Position.Column = oCellAddress.Column) Then
+					bFound = True
+					oAnno.setIsVisible(True)
+					Exit For
+				End If
+			Next I
+
+	End Select
+	RA_ClearAssistantDialog()
+End Function
+
+
+Function AddBtn_Click(oEvent As Object)
+	Dim oTextbox As Object
+
+	With oAssistantDlg
+		Set oTextbox = .getControl(&quot;Item&quot;)
+		Tools.Listbox.AddSingleItemToListbox(.getControl(&quot;ItemList&quot;).model, oTextbox.getText())
+		oTextbox.setText(&quot;&quot;)
+		oTextbox.setFocus()
+	End With
+	
+End Function
+
+Function Type_Change(Optional oEvent As Object)
+
+	m_Change_FormatControls()
+	m_Change_BooleanControls()
+	m_Change_ImageControls()
+	m_Change_EnumControls()
+
+End Function
+
+Private Function m_Change_FormatControls()
+	Dim bSW As Boolean
+
+	With oAssistantDlg.Model
+		bSW = .StringType.State
+		.FormatList.Enabled = bSW
+		If (.Tag &lt;&gt; &quot;scalc&quot;) Then
+			If (bSW) Then
+				ShowApiHelp(TYPE_NORMAL)
+			End If
+		Else
+			If (bSW) Then
+				m_ShowFormatListApiHelp()
+			End If
+		End If
+	End With
+
+End Function
+
+Private Function m_Change_BooleanControls()
+	Dim bSW As Boolean
+
+	With oAssistantDlg.Model
+		bSW = .BooleanType.State
+		.BooleanTrueLbl.Enabled = bSW
+		.BooleanFalseLbl.Enabled = bSW
+		.BooleanTrueItem.Enabled = bSW
+		.BooleanFalseItem.Enabled = bSW
+		If (bSW) Then
+			ShowApiHelp(TYPE_BOOLEAN)
+		End If
+	End With
+End Function
+
+Private Function m_Change_ImageControls()
+	Dim bSW As Boolean
+
+	With oAssistantDlg.Model
+		bSW = .ImageType.State
+		.WidthLbl.Enabled = bSW
+		.WidthFld.Enabled = bSW
+		.HeightLbl.Enabled = bSW
+		.HeightFld.Enabled = bSW
+		If (Not bSW) Then
+			.WidthFld.Value = 0
+			.HeightFld.Value = 0
+		Else
+			ShowApiHelp(TYPE_IMAGE)
+		End If
+	End With
+
+End Function
+
+Private Function m_Change_EnumControls()
+	Dim bSW as Boolean
+
+	With oAssistantDlg.Model
+		bSW = .EnumType.State
+		.ItemListLbl.Enabled = bSW
+		.Item.Enabled = bSW
+		.ItemList.Enabled = bSW
+		.AddBtn.Enabled = False
+		.UpBtn.Enabled = False
+		.DownBtn.Enabled = False
+		.DelBtn.Enabled = False
+		If ( Not bSW) Then
+			.Item.Text = &quot;&quot;
+			Tools.Listbox.EmptyListbox(.ItemList)
+		Else
+			ShowApiHelp(TYPE_ENUM)
+		End If
+	End With
+
+End Function
+
+Function DelBtn_Click(oEvent As Object)
+	Dim nPos%
+	Dim oListControl As Object
+
+	With oAssistantDlg
+		oListControl = .getControl(&quot;ItemList&quot;)
+		nPos = oListControl.getSelectedItemPos()
+		If (nPos &gt;= 0) Then
+			oListControl.removeItems(nPos, 1)
+			&apos; 刪除光光
+			If (oListControl.getItemCount() &lt; 1) Then
+				.getControl(&quot;UpBtn&quot;).setEnable(False)
+				.getControl(&quot;DownBtn&quot;).setEnable(False)
+				.getControl(&quot;DelBtn&quot;).setEnable(False)
+				.getControl(&quot;Item&quot;).setFocus()
+			End If
+		End If
+	End With
+End Function
+
+Function UpBtn_Click(oEvent As Object)
+	RA_ItemMoveUp(oAssistantDlg.getControl(&quot;ItemList&quot;))
+End Function
+
+Function DownBtn_Click(oEvent As Object)
+	RA_ItemMoveDown(oAssistantDlg.getControl(&quot;ItemList&quot;))
+End Function
+
+Function ItemList_onChange(oEvent As Object)
+	With oAssistantDlg
+		.getControl(&quot;UpBtn&quot;).setEnable(True)
+		.getControl(&quot;DownBtn&quot;).setEnable(True)
+		.getControl(&quot;DelBtn&quot;).setEnable(True)
+	End With
+End Function
+
+Function RA_FieldSelect(Optional oField As Object)
+	Dim sName As String, sHint As String
+	Dim nItemPos As Long
+	Dim nLegalFields As Long
+	Dim I As Long
+	Dim oFld As Object
+
+	&apos; 沒有傳參數，就清除所有欄位
+	If (IsMissing(oField)) Then
+		RA_ClearAssistantDialog()
+		Exit Function
+	End If
+
+	With oAssistantDlg.Model.FieldName
+		.removeAllItems()
+		&apos; 傳來佔位項欄位
+		Select Case RA_GetFieldType(oField)
+			Case &quot;JumpEdit&quot;
+				sName = oField.PlaceHolder
+				sHint = oField.Hint
+				nItemPos = .ItemCount
+				.insertItemText(nItemPos, sName)
+				.setItemData(nItemPos, oField)
+				.Tag = nItemPos
+				RA_ParserField(oField)
+			&apos;傳來儲存格欄位集合
+			Case &quot;TextFields&quot;
+				nLegalFields = 0
+				For I = 1 To oField.Count
+					oFld = oField.getByIndex(I - 1)
+					If (Ra_GetFieldType(oFld) = &quot;URL&quot;) Then
+						sName = oFld.Representation
+						sHint = oFld.TargetFrame
+						If (Left(sHint,5) = &quot;Type:&quot;) Then
+							nItemPos = .ItemCount
+							.insertItemText(nItemPos, sName)
+							.setItemData(nItemPos, oFld)
+							nLegalFields = nLegalFields + 1
+						End If
+					End If
+				Next I
+
+				Select Case nLegalFields
+					Case 0
+						RA_ClearAssistantDialog()
+						Exit Function
+					Case 1
+						.Tag = 0
+						RA_ParserField(.getItemData(0))
+					Case Else
+						.Tag = &quot;&quot;
+						.Text = &quot;&quot;
+						Change_FormatControls(False)
+						Change_ImageControls(False)
+						Change_EnumControls(False)
+				End Select
+		End Select
+		oAssistantDlg.getControl(&quot;InsertBtn&quot;).setLabel(&quot;更新(~C)&quot;)
+		oAssistantDlg.getControl(&quot;DelField&quot;).setEnable(True)
+	End With
+
+End Function
+
+Function RA_ParserField(oField As Object)
+	Dim oResource As Object
+	Dim aItems() As String
+	Dim aSize() As String
+	Dim sFieldName$, sHint$
+
+	Select Case RA_GetFieldType(oField)
+		Case &quot;JumpEdit&quot;	&apos;佔位項(預留位置、萬用欄位)
+			sFieldName = oField.PlaceHolder
+			sHint = oField.Hint
+		Case &quot;URL&quot;
+			sFieldName = oField.Representation
+			sHint = oField.TargetFrame
+		Case Else
+			Exit Function
+	End Select
+
+	Set oResource = TypeSetting2Resource(sFieldName, sHint)
+
+	oAssistantDlg.getControl(&quot;FieldName&quot;).setText(sFieldName)
+
+	With oResource
+		Select Case .getValue(&quot;Type&quot;)
+			Case &quot;Boolean&quot;
+				oAssistantDlg.getControl(&quot;BooleanType&quot;).setState(True)
+			Case &quot;Image&quot;
+				oAssistantDlg.getControl(&quot;ImageType&quot;).setState(True)
+			Case &quot;Enum&quot;
+				oAssistantDlg.getControl(&quot;EnumType&quot;).setState(True)
+			Case Else
+				oAssistantDlg.getControl(&quot;StringType&quot;).setState(True)
+		End Select
+		Type_Change()	&apos; 變更欄位型態
+
+		If (.hasByName(&quot;Size&quot;)) Then
+			aSize = Split(.getValue(&quot;Size&quot;), &quot;x&quot;)
+			If (UBound(aSize) = 1) Then
+				oAssistantDlg.getControl(&quot;WidthFld&quot;).setText(aSize(0))
+				oAssistantDlg.getControl(&quot;HeightFld&quot;).setText(aSize(1))
+			End If
+		End If
+
+		If (.hasByName(&quot;Items&quot;)) Then
+			aItems() = Split(.getValue(&quot;Items&quot;), &quot;,&quot;)
+			If (oAssistantDlg.getControl(&quot;BooleanType&quot;).getState()) Then
+				oAssistantDlg.getControl(&quot;BooleanTrueItem&quot;).setText(aItems(0))
+				oAssistantDlg.getControl(&quot;BooleanFalseItem&quot;).setText(aItems(1))
+			Else
+				oAssistantDlg.getControl(&quot;ItemList&quot;).model.StringItemList() = aItems()
+			End If
+		End If
+
+		oAssistantDlg.getControl(&quot;Description&quot;).setText(.getValue(&quot;Description&quot;))
+		ShowApiHelp(.getValue(&quot;ApiHelp&quot;))
+	End With
+End Function
+
+Function Item_SelectChange(e As Object)
+	Dim sName As String
+	Dim I As Long
+
+	With oAssistantDlg
+		With .Model.FieldName
+			.Tag = &quot;&quot;
+			&apos; 找找看是哪一個 ItemPos(Listbox 有 getSelectItemPos函數， Combobox 沒有 XD)
+			For I = LBound(.StringItemList) To UBound(.StringItemList)
+				If (.StringItemList(I) = .Text) Then
+					.Tag = I
+					RA_ParserField(.getItemData(I))
+					Exit For
+				End If
+			Next I
+		End With
+	End With
+End Function
+</script:module>

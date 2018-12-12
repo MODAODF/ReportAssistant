@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:style-id="4" dlg:id="BindingLineDialog" dlg:left="107" dlg:top="69" dlg:width="168" dlg:height="141" dlg:closeable="true" dlg:moveable="true" dlg:title="裝訂線">
+ <dlg:styles>
+  <dlg:style dlg:style-id="0" dlg:font-height="10"/>
+  <dlg:style dlg:style-id="1" dlg:background-color="0x0"/>
+  <dlg:style dlg:style-id="2" dlg:font-name="Microsoft JhengHei UI" dlg:font-height="10" dlg:font-stylename="標準" dlg:font-family="swiss"/>
+  <dlg:style dlg:style-id="3" dlg:background-color="0xffffff" dlg:border="0x0" dlg:font-height="10"/>
+  <dlg:style dlg:style-id="4" dlg:font-name="細明體" dlg:font-height="10" dlg:font-stylename="標準" dlg:font-family="modern"/>
+ </dlg:styles>
+ <dlg:bulletinboard>
+  <dlg:text dlg:style-id="0" dlg:id="Label1" dlg:tab-index="0" dlg:left="4" dlg:top="7" dlg:width="38" dlg:height="12" dlg:value="顯示字串(~T)" dlg:valign="center"/>
+  <dlg:text dlg:style-id="0" dlg:id="Label2" dlg:tab-index="2" dlg:left="4" dlg:top="24" dlg:width="24" dlg:height="12" dlg:value="字型(~F)" dlg:valign="center"/>
+  <dlg:text dlg:style-id="0" dlg:id="Label3" dlg:tab-index="5" dlg:left="105" dlg:top="7" dlg:width="24" dlg:height="12" dlg:value="顏色(~C)" dlg:valign="center"/>
+  <dlg:titledbox dlg:style-id="0" dlg:id="FrameControl1" dlg:tab-index="6" dlg:left="4" dlg:top="71" dlg:width="56" dlg:height="48">
+   <dlg:title dlg:value="插入頁"/>
+  </dlg:titledbox>
+  <dlg:titledbox dlg:style-id="0" dlg:id="FrameControl2" dlg:tab-index="10" dlg:left="64" dlg:top="71" dlg:width="99" dlg:height="28">
+   <dlg:title dlg:value="在頁面位置"/>
+  </dlg:titledbox>
+  <dlg:text dlg:style-id="1" dlg:id="ColorLabel" dlg:tab-index="11" dlg:left="129" dlg:top="7" dlg:width="34" dlg:height="12" dlg:help-text="點選改變顏色" dlg:valign="center">
+   <script:event script:event-name="on-mouseup" script:macro-name="vnd.sun.star.script:ReportAssistant.BindingLine.ColorPicker?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:text>
+  <dlg:button dlg:style-id="0" dlg:id="OkButton" dlg:tab-index="12" dlg:left="88" dlg:top="123" dlg:width="30" dlg:height="12" dlg:default="true" dlg:value="確定(~O)" dlg:valign="center" dlg:button-type="ok"/>
+  <dlg:combobox dlg:style-id="0" dlg:id="FontName" dlg:tab-index="3" dlg:left="29" dlg:top="24" dlg:width="103" dlg:height="12" dlg:spin="true" dlg:linecount="10">
+   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.script:ReportAssistant.BindingLine.setPreview?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:combobox>
+  <dlg:combobox dlg:id="FontSize" dlg:tab-index="4" dlg:left="133" dlg:top="24" dlg:width="30" dlg:height="12" dlg:spin="true">
+   <dlg:menupopup>
+    <dlg:menuitem dlg:value="8"/>
+    <dlg:menuitem dlg:value="9"/>
+    <dlg:menuitem dlg:value="10"/>
+    <dlg:menuitem dlg:value="10.5"/>
+    <dlg:menuitem dlg:value="11"/>
+    <dlg:menuitem dlg:value="12"/>
+    <dlg:menuitem dlg:value="13"/>
+    <dlg:menuitem dlg:value="14"/>
+    <dlg:menuitem dlg:value="15"/>
+    <dlg:menuitem dlg:value="16"/>
+   </dlg:menupopup>
+   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.script:ReportAssistant.BindingLine.setPreview?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:combobox>
+  <dlg:combobox dlg:style-id="2" dlg:id="String" dlg:tab-index="1" dlg:left="42" dlg:top="7" dlg:width="61" dlg:height="12" dlg:spin="true">
+   <dlg:menupopup>
+    <dlg:menuitem dlg:value="裝訂線"/>
+   </dlg:menupopup>
+   <script:event script:event-name="on-textchange" script:macro-name="vnd.sun.star.script:ReportAssistant.BindingLine.setPreview?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:combobox>
+  <dlg:radiogroup>
+   <dlg:radio dlg:style-id="0" dlg:id="AllPages" dlg:tab-index="9" dlg:left="10" dlg:top="105" dlg:width="30" dlg:height="10" dlg:value="~每一頁" dlg:valign="center" dlg:group-name="PageGroup"/>
+   <dlg:radio dlg:style-id="0" dlg:id="CurrentPage" dlg:tab-index="8" dlg:left="10" dlg:top="93" dlg:width="47" dlg:height="10" dlg:value="游標所在頁" dlg:valign="center" dlg:group-name="PageGroup"/>
+   <dlg:radio dlg:style-id="0" dlg:id="FirstPage" dlg:tab-index="7" dlg:left="10" dlg:top="81" dlg:width="36" dlg:height="10" dlg:value="第一頁(~1)" dlg:valign="center" dlg:group-name="PageGroup" dlg:checked="true"/>
+   <dlg:radio dlg:style-id="0" dlg:id="PageLeft" dlg:tab-index="13" dlg:left="66" dlg:top="83" dlg:width="24" dlg:height="8" dlg:value="~左邊" dlg:valign="center" dlg:group-name="PosGroup" dlg:checked="true"/>
+   <dlg:radio dlg:style-id="0" dlg:id="PageRight" dlg:tab-index="14" dlg:left="90" dlg:top="83" dlg:width="24" dlg:height="8" dlg:value="~右邊" dlg:valign="center" dlg:group-name="PosGroup"/>
+   <dlg:radio dlg:style-id="0" dlg:id="PageTop" dlg:tab-index="15" dlg:left="114" dlg:top="83" dlg:width="24" dlg:height="8" dlg:value="~頂端" dlg:valign="center" dlg:group-name="PosGroup"/>
+   <dlg:radio dlg:style-id="0" dlg:id="PageBottom" dlg:tab-index="16" dlg:left="137" dlg:top="83" dlg:width="24" dlg:height="8" dlg:value="~底部" dlg:valign="center" dlg:group-name="PosGroup"/>
+  </dlg:radiogroup>
+  <dlg:text dlg:style-id="0" dlg:id="Label4" dlg:tab-index="17" dlg:left="65" dlg:top="103" dlg:width="38" dlg:height="12" dlg:value="距離邊界(~B)" dlg:valign="center"/>
+  <dlg:text dlg:style-id="0" dlg:id="Label5" dlg:tab-index="19" dlg:left="141" dlg:top="103" dlg:width="15" dlg:height="12" dlg:value="公分" dlg:valign="center" dlg:nolabel="true"/>
+  <dlg:numericfield dlg:style-id="0" dlg:id="Boundary" dlg:tab-index="18" dlg:left="103" dlg:top="103" dlg:width="34" dlg:height="12" dlg:align="right" dlg:valign="center" dlg:strict-format="true" dlg:value="0" dlg:value-min="0.1" dlg:value-max="15" dlg:repeat="50"/>
+  <dlg:button dlg:style-id="0" dlg:id="CancelButton" dlg:tab-index="20" dlg:left="130" dlg:top="123" dlg:width="30" dlg:height="12" dlg:value="取消" dlg:valign="center" dlg:button-type="cancel"/>
+  <dlg:text dlg:style-id="3" dlg:id="Preview" dlg:tab-index="21" dlg:left="4" dlg:top="43" dlg:width="157" dlg:height="24" dlg:help-text="概觀預覽" dlg:align="center" dlg:valign="center"/>
+ </dlg:bulletinboard>
+</dlg:window>

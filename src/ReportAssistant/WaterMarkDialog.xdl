@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:style-id="1" dlg:id="WaterMarkDialog" dlg:left="127" dlg:top="24" dlg:width="194" dlg:height="89" dlg:closeable="true" dlg:moveable="true" dlg:title="浮水印">
+ <dlg:styles>
+  <dlg:style dlg:style-id="0" dlg:font-height="9"/>
+  <dlg:style dlg:style-id="1" dlg:font-height="10"/>
+ </dlg:styles>
+ <dlg:bulletinboard>
+  <dlg:button dlg:style-id="0" dlg:id="PickupImage" dlg:tab-index="3" dlg:left="12" dlg:top="36" dlg:width="41" dlg:height="12" dlg:value="選取圖片(~P)" dlg:valign="center">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.PickupImage_click?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:button dlg:style-id="1" dlg:id="OKButton" dlg:tab-index="17" dlg:disabled="true" dlg:left="112" dlg:top="70" dlg:width="34" dlg:height="12" dlg:default="true" dlg:value="確定" dlg:checked="true">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.ApplyButton_click?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:button dlg:style-id="1" dlg:id="CancelButton" dlg:tab-index="18" dlg:left="155" dlg:top="70" dlg:width="34" dlg:height="12" dlg:value="離開" dlg:button-type="cancel"/>
+  <dlg:scrollbar dlg:id="TransparenceBar" dlg:tab-index="19" dlg:left="102" dlg:top="51" dlg:width="51" dlg:height="10" dlg:help-text="數值愈大愈淡" dlg:increment="5" dlg:curpos="0">
+   <script:event script:event-name="on-adjustmentvaluechange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.TransparenceBar_Adjust?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:scrollbar>
+  <dlg:text dlg:id="TransparenceLabel" dlg:tab-index="20" dlg:left="156" dlg:top="51" dlg:width="36" dlg:height="10" dlg:valign="center" dlg:nolabel="true"/>
+  <dlg:radiogroup>
+   <dlg:radio dlg:style-id="1" dlg:id="NoWaterMark" dlg:tab-index="0" dlg:left="6" dlg:top="6" dlg:width="55" dlg:height="10" dlg:value="不使用浮水印(~N)" dlg:valign="center" dlg:group-name="WaterMarkGrp">
+    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.WaterMarkType_change?language=Basic&amp;location=application" script:language="Script"/>
+   </dlg:radio>
+   <dlg:radio dlg:style-id="1" dlg:id="ImageWaterMark" dlg:tab-index="1" dlg:left="6" dlg:top="22" dlg:width="54" dlg:height="10" dlg:value="圖片浮水印(~I)" dlg:valign="center" dlg:group-name="WaterMarkGrp">
+    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.WaterMarkType_change?language=Basic&amp;location=application" script:language="Script"/>
+   </dlg:radio>
+   <dlg:radio dlg:style-id="1" dlg:id="TextWaterMark" dlg:tab-index="2" dlg:left="9" dlg:top="118" dlg:width="54" dlg:height="10" dlg:value="文字浮水印(~X)" dlg:valign="center" dlg:group-name="WaterMarkGrp">
+    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.WaterMarkType_change?language=Basic&amp;location=application" script:language="Script"/>
+   </dlg:radio>
+  </dlg:radiogroup>
+  <dlg:text dlg:id="ImagePath" dlg:tab-index="4" dlg:left="55" dlg:top="36" dlg:width="135" dlg:height="10" dlg:valign="center" dlg:nolabel="true"/>
+  <dlg:button dlg:style-id="1" dlg:id="ApplyButton" dlg:tab-index="21" dlg:disabled="true" dlg:left="69" dlg:top="70" dlg:width="34" dlg:height="12" dlg:value="套用(~A)">
+   <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.ApplyButton_click?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:button>
+  <dlg:checkbox dlg:id="TranslucentButton" dlg:tab-index="22" dlg:left="122" dlg:top="173" dlg:width="38" dlg:height="12" dlg:value="半透明(~E)" dlg:valign="center" dlg:checked="true">
+   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.TextWaterMark_ControlChange?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:checkbox>
+  <dlg:text dlg:id="TextWordsLabel" dlg:tab-index="7" dlg:left="16" dlg:top="130" dlg:width="39" dlg:height="10" dlg:value="文字(~T)：" dlg:valign="center"/>
+  <dlg:combobox dlg:id="TextWords" dlg:tab-index="12" dlg:left="59" dlg:top="128" dlg:width="133" dlg:height="12" dlg:spin="true" dlg:linecount="10">
+   <script:event script:event-name="on-textchange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.TextWords_change?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:combobox>
+  <dlg:text dlg:id="TextFontNameLabel" dlg:tab-index="8" dlg:left="16" dlg:top="145" dlg:width="39" dlg:height="10" dlg:value="字型(~F)：" dlg:valign="center"/>
+  <dlg:combobox dlg:id="TextFontName" dlg:tab-index="13" dlg:left="59" dlg:top="145" dlg:width="133" dlg:height="12" dlg:spin="true" dlg:linecount="9">
+   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.TextWaterMark_ControlChange?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:combobox>
+  <dlg:text dlg:id="TextFontSizeLabel" dlg:tab-index="9" dlg:left="16" dlg:top="161" dlg:width="39" dlg:height="10" dlg:value="大小(~S)：" dlg:valign="center"/>
+  <dlg:combobox dlg:id="TextFontSize" dlg:tab-index="14" dlg:left="59" dlg:top="158" dlg:width="58" dlg:height="12" dlg:value="自動" dlg:spin="true" dlg:linecount="6">
+   <dlg:menupopup>
+    <dlg:menuitem dlg:value="自動"/>
+   </dlg:menupopup>
+   <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.TextWaterMark_ControlChange?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:combobox>
+  <dlg:text dlg:id="TextFontColorLabel" dlg:tab-index="10" dlg:left="16" dlg:top="175" dlg:width="39" dlg:height="10" dlg:value="色彩(~C)：" dlg:valign="center"/>
+  <dlg:text dlg:id="TextAngleLabel" dlg:tab-index="11" dlg:left="16" dlg:top="192" dlg:width="39" dlg:height="10" dlg:value="版面配置：" dlg:valign="center" dlg:nolabel="true"/>
+  <dlg:radiogroup>
+   <dlg:radio dlg:id="TextAngle45" dlg:tab-index="15" dlg:left="59" dlg:top="192" dlg:width="34" dlg:height="10" dlg:value="對角線(~D)" dlg:valign="center" dlg:group-name="AngleGrp" dlg:checked="true">
+    <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.TextWaterMark_ControlChange?language=Basic&amp;location=application" script:language="Script"/>
+   </dlg:radio>
+   <dlg:radio dlg:id="TextAngle0" dlg:tab-index="16" dlg:left="98" dlg:top="192" dlg:width="34" dlg:height="10" dlg:value="水平(~H)" dlg:valign="center" dlg:group-name="AngleGrp">
+    <script:event script:event-name="on-itemstatechange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.TextWaterMark_ControlChange?language=Basic&amp;location=application" script:language="Script"/>
+   </dlg:radio>
+  </dlg:radiogroup>
+  <dlg:text dlg:id="TextFontColor" dlg:tab-index="23" dlg:left="59" dlg:top="173" dlg:width="56" dlg:height="10" dlg:nolabel="true">
+   <script:event script:event-name="on-mouseup" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.ColorPicker?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:text>
+  <dlg:combobox dlg:id="ScaleRatio" dlg:tab-index="6" dlg:left="55" dlg:top="50" dlg:width="43" dlg:height="12" dlg:spin="true" dlg:linecount="6">
+   <dlg:menupopup>
+    <dlg:menuitem dlg:value="自動"/>
+    <dlg:menuitem dlg:value="500%"/>
+    <dlg:menuitem dlg:value="200%"/>
+    <dlg:menuitem dlg:value="150%"/>
+    <dlg:menuitem dlg:value="100%"/>
+    <dlg:menuitem dlg:value="50%"/>
+   </dlg:menupopup>
+   <script:event script:event-name="on-textchange" script:macro-name="vnd.sun.star.script:ReportAssistant.WaterMark.ScaleRatio_textChange?language=Basic&amp;location=application" script:language="Script"/>
+  </dlg:combobox>
+  <dlg:text dlg:id="ScaleRatioLabel" dlg:tab-index="5" dlg:left="12" dlg:top="52" dlg:width="39" dlg:height="10" dlg:value="縮放比例(~L)：" dlg:valign="center"/>
+ </dlg:bulletinboard>
+</dlg:window>
