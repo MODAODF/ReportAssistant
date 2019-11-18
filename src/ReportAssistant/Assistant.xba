@@ -3,14 +3,16 @@
 <script:module xmlns:script="http://openoffice.org/2000/script" script:name="Assistant" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
 Option Explicit
 
-Private oAssistantDlg As Object
-Private aTypes(10) As Object
-Private IsRunning As Boolean
+Public oAssistantDlg As Object
+Public aTypes(10) As Object
+Public statisticMethods(5) As Object
+Public IsRunning As Boolean
 
-Const TYPE_NORMAL	As String = &quot;可為任意文字或數值資料。&quot;
-Const TYPE_BOOLEAN	As String = &quot;&apos;true&apos;或&apos;false&apos;。&quot;
-Const TYPE_IMAGE	As String = &quot;一般常見的圖片格式轉成 Base64 格式傳送。&quot;
-Const TYPE_ENUM		As String = &quot;從 1 開始的正整數。對應列舉清單，依據數字顯示對應的項目。&quot;
+Const TYPE_NORMAL	  As String = &quot;可為任意文字或數值資料。&quot;
+Const TYPE_BOOLEAN	  As String = &quot;&apos;true&apos;或&apos;false&apos;。&quot;
+Const TYPE_IMAGE	  As String = &quot;一般常見的圖片格式轉成 Base64 格式傳送。&quot;
+Const TYPE_ENUM		  As String = &quot;從 1 開始的正整數。對應列舉清單，依據數字顯示對應的項目。&quot;
+Const TYPE_STATISTIC  As String = &quot;選擇目標欄位進行統計函數運算。&quot;
 
 Type NumberFormatType
 	FormatName	As String
@@ -23,11 +25,56 @@ Type NumberFormatType
 	Description As String
 End Type
 
+Type StatisticFormatType
+	MethodName  As String
+	Description As String
+End Type
+
+Type GroupArray
+	GroupName as String
+	Member as String
+End Type
+
+Type GroupVariable
+	RealName As String
+	GroupName As  String
+End Type
+
 Sub Main
 	Dim oDisposeListener As Object
 	Dim aType As Object
+	Dim sMethod As Object
 	Dim I As Long
-
+	
+	&apos; 初始化統計方法的資料, 目前最多定義 10 總方法
+	For I = LBound(statisticMethods) To UBound(statisticMethods)
+		statisticMethods(I) = createObject(&quot;StatisticFormatType&quot;)
+		Select Case I
+			Case 0
+				statisticMethods(I).MethodName  = &quot;總和&quot;
+				statisticMethods(I).Description = &quot;計算指定群組欄總和&quot; 
+			Case 1
+				statisticMethods(I).MethodName = &quot;中位數&quot;
+				statisticMethods(I).Description = &quot;計算指定群組欄的中位數&quot;
+			Case 2
+				statisticMethods(I).MethodName = &quot;最大值&quot;
+				statisticMethods(I).Description = &quot;計算指定群組欄的最大值&quot;
+			Case 3
+				statisticMethods(I).MethodName = &quot;最小值&quot;
+				statisticMethods(I).Description = &quot;計算指定群組欄的最小值&quot;
+			Case 4
+				statisticMethods(I).MethodName = &quot;平均&quot;
+				statisticMethods(I).Description = &quot;計算指定群組欄的平均值&quot;
+			Case 5
+				statisticMethods(I).MethodName = &quot;計數&quot;
+				statisticMethods(I).Description = &quot;計算指定群組欄的非空白格總數&quot;
+			Case Else
+				statisticMethods(I).MethodName = &quot;&quot;
+				statisticMethods(I).Description = &quot;&quot;
+		End Select
+	Next I
+	
+	&apos; 初始化變數型別的資料
 	For I = LBound(aTypes) To UBound(aTypes)
 		aTypes(I) = createObject(&quot;NumberFormatType&quot;)
 		Select Case I
@@ -113,41 +160,71 @@ Sub Main
 
 	&apos; 確保只有一個 Dialog 被執行
 	If (Not DialogIsRunning(oAssistantDlg)) Then
+	
+			
 		IsRunning = True
 		Set oDisposeListener = CreateUnoListener(_
 							&quot;AssistantDialog_&quot;, &quot;com.sun.star.lang.XEventListener&quot;)
 		Set oAssistantDlg =  LoadModelessDialog(LIB_NAME, &quot;AssistantDialog&quot;)
+		
+		&apos;透過 python 取得插件路徑
+		Dim path
+		Dim delIMGPath
+		Dim cellSettingIMGPath
+		Dim obj 
+		obj = CreateUnoService(&quot;ReportAssistant.getExtensionPath&quot;)
+	
+		if not isNull(obj) then
+			path = obj.execute(array())
+		endif
 
 		With oAssistantDlg
+		
+			&apos;自製圖片
+			delIMGPath =  &quot;file:///&quot; + path + &quot;images/delete.png&quot;
+			cellSettingIMGPath =  &quot;file:///&quot; + path + &quot;images/gear.png&quot;
+			.Model.DelField.ImageURL = delIMGPath
+			.Model.AdvanceSetting.ImageURL = cellSettingIMGPath
 			With .Model
 				.Step = 1
 				.Tag = Tools.Misc.GetDocumentType(ThisComponent)
 				.ReportAssistantButton.ImageURL = getIconURL(&quot;design-icon.png&quot;)
 				.ParagraphStylesButton.ImageURL = getIconURL(&quot;paragraph-icon.png&quot;)
 				.NumberingStylesButton.ImageURL = getIconURL(&quot;numbering-icon.png&quot;)
+				&apos;.DelField.ImageURL = getIconURL(&quot;numbering-icon.png&quot;)
 				.PersonalButton.ImageURL = getIconURL(&quot;personal-information-icon.png&quot;)
 				.WaterMarkButton.ImageURL = getIconURL(&quot;watermark-icon.png&quot;)
 				.BindingLineButton.ImageURL = getIconURL(&quot;stapler-icon.png&quot;)
 				If (.Tag = &quot;scalc&quot;) Then
-					.StringType.Label = &quot;格~式&quot;
+					
 					.AdvanceSetting.EnableVisible = True
 					.FormatList.EnableVisible = True
 					.DelField.EnableVisible = False
+					
+					&apos;統計變數只有在 calc 可看見
+					.GroupVariableList.EnableVisible = True
+					.StatisticType.EnableVisible = True
+					.StatisticList.EnableVisible = True
 
 					.ParagraphStylesButton.Enabled = False
 					.NumberingStylesButton.Enabled = False
 					.WaterMarkButton.Enabled = False
 					.BindingLineButton.Enabled = False
+					
 				Else
-					.StringType.Label = &quot;一~般&quot;
+					
 					.AdvanceSetting.EnableVisible = False
 					.FormatList.EnableVisible = False
 					.DelField.EnableVisible = True
+					.GroupVariableList.EnableVisible = False
+					.StatisticType.EnableVisible = False
+					.StatisticList.EnableVisible = False
 
 					.ParagraphStylesButton.Enabled = True
 					.NumberingStylesButton.Enabled = True
 					.WaterMarkButton.Enabled = True
 					.BindingLineButton.Enabled = True
+					
 				End If
 			End With	&apos; Model
 
@@ -161,11 +238,30 @@ Sub Main
 					I = I + 1
 				Next aType
 			End With
+			
+			With .getControl(&quot;StatisticList&quot;).Model
+				I = 0
+				For Each sMethod In statisticMethods
+					If sMethod.MethodName &lt;&gt; &quot;&quot; Then
+						.insertItemText(I, sMethod.MethodName)
+						.setItemData(I, sMethod)
+					End If
+					I = I + 1
+				Next sMethod	
+			End With
+			.getControl(&quot;StatisticList&quot;).selectItemPos(0, True)
+			
 			.addEventListener(oDisposeListener)
 			.setVisible(True)
 			RA_SEL_selectionChanged()
 			&apos; 加入標記偵測
 			RA_registerSelectionChenge(ThisComponent)
+			With oAssistantDlg.Model
+				If (.Tag = &quot;scalc&quot;) Then
+					updateGroupVariableList()
+				End If
+			End With
+			
 			Do While IsRunning
 				&apos; 如果文件被關掉，Dialog.Visible 會被設成 False
 				IsRunning = .isVisible()
@@ -173,6 +269,9 @@ Sub Main
 			Loop
 			.setVisible(False)
 		End With	&apos; oAssistantDlg
+		
+		
+		
 	Else
 		Msgbox(&quot;範本設計精靈執行中&quot;)
 	End If
@@ -187,6 +286,9 @@ End Function
 
 &apos; 清除
 Function RA_ClearAssistantDialog()
+	IF NOT IsRunning Then
+		Exit Function
+	END IF
 	With oAssistantDlg.Model
 		.InsertBtn.Label = &quot;插入文件(~I)&quot;
 		.InsertBtn.Enabled = False
@@ -203,7 +305,9 @@ Function RA_ClearAssistantDialog()
 End Function
 
 Function RA_SetDetailArea(bSW As Boolean)
-
+	If isNull(oAssistantDlg) Then
+		Exit Function
+	End if
 	With oAssistantDlg
 		With .getControl(&quot;DetailFrame&quot;)
 			.setEnable(bSW)
@@ -251,7 +355,7 @@ Function InsertBtn_Click()
 		MsgBox &quot;欄位名稱必須輸入&quot;
 		Exit Function
 	End If
-
+	
 	RA_InsertField()	&apos; 插入或更新欄位
 	RA_ClearAssistantDialog()
 
@@ -278,6 +382,7 @@ Function RA_InsertField()
 	Dim sTmp$
 	Dim sFieldText$, sHint$
 	Dim sType$, sFormat$, sSize$, sItems$, sDescription$, sApiHelp$
+	Dim sMethod$, sColumn$, sGroupName as String
 	Dim nPos As Long
 	Dim oField As Object
 	Dim oCell As Object
@@ -289,7 +394,7 @@ Function RA_InsertField()
 			Set oCell = ThisComponent.currentSelection
 			&apos; 單一 Cell 才行
 			If (Not oCell.supportsService(&quot;com.sun.star.sheet.SheetCell&quot;)) Then
-				Msgbox(&quot;欄位只能插入單一儲存格中&quot;)
+				Msgbox(&quot;欄位只能插入單一儲存格中......&quot;)
 				Exit Function
 			End If
 		End If
@@ -304,7 +409,10 @@ Function RA_InsertField()
 		sSize = &quot;&quot;
 		sItems = &quot;&quot;
 		sDescription = &quot;&quot;
+		sMethod = &quot;&quot;
 		sApiHelp = &quot;&quot;
+		sColumn = &quot;&quot;
+		sGroupName = &quot;&quot;
 
 		If (.getControl(&quot;StringType&quot;).State) Then
 			If (.Model.Tag = &quot;scalc&quot;) Then
@@ -327,6 +435,29 @@ Function RA_InsertField()
 			sType = &quot;Enum&quot;
 			sItems = Join(.getControl(&quot;ItemList&quot;).model.StringItemList, &quot;,&quot;)
 			sApiHelp = TYPE_ENUM
+		ElseIf (.getControl(&quot;StatisticType&quot;).State) Then
+			If ( NOT ThisComponent.supportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;)) Then
+				Msgbox(&quot;統計變數功能只支援試算表!&quot;)
+				Exit Function
+			End If
+			sType = &quot;Statistic&quot;
+			&apos; 把指定的變數名稱塞入 sItem
+			Dim currentPos as Long 
+			if .getControl(&quot;GroupVariableList&quot;).Model.ItemCount = 0 Then
+				Msgbox(&quot;沒有選擇群組變數&quot;)
+				Exit Function
+			end if
+			currentPos = .getControl(&quot;GroupVariableList&quot;).getSelectedItemPos()
+			sItems = .getControl(&quot;GroupVariableList&quot;).Model.getItemData(currentPos).RealName
+			sMethod = .getControl(&quot;StatisticList&quot;).getSelectedItem()
+			
+			sColumn = findCellsByVariableName(sItems)
+			sGroupName  = findGroupNameByVariableName(sItems)
+			&apos;If (sColumn = &quot;&quot; or sGroupName = &quot;&quot;) Then
+			&apos;	Msgbox(&quot;查無此變數，請確認一次!&quot;)
+			&apos;	Exit Function
+			&apos;End If 
+			sApiHelp = TYPE_STATISTIC
 		Else
 			MsgBox &quot;欄位型態未指定！&quot;
 			Exit Function
@@ -341,6 +472,16 @@ Function RA_InsertField()
 		End If
 		If (sSize &lt;&gt; &quot;&quot;) Then
 			oResource.setValue(&quot;Size&quot;, sSize)
+		End If
+		&apos;Below is only for statistic 
+		If (sMethod &lt;&gt; &quot;&quot;) Then
+			oResource.setValue(&quot;Method&quot;, sMethod)
+		End If
+		If (sColumn &lt;&gt; &quot;&quot;) Then
+			oResource.setValue(&quot;Column&quot;, sColumn)
+		End If
+		If (sGroupName &lt;&gt; &quot;&quot;) Then
+			oResource.setValue(&quot;GroupName&quot;, sGroupName)
 		End If
 		oResource.setValue(&quot;Description&quot;, Trim(.getControl(&quot;Description&quot;).getText())
 		oResource.setValue(&quot;ApiHelp&quot;, sApiHelp)
@@ -372,6 +513,360 @@ Function RA_InsertField()
 
 End Function
 
+
+&apos; 透過使用者指定的變數名稱進行全域(A1:AMJ1048576)查找
+Function findCellsByVariableName(target) as String
+	IF oAssistantDlg.Model.Tag = &quot;swriter&quot; Then
+		findCellsByVariableName = &quot;&quot;
+		Exit Function
+	END IF
+	Dim oStatis as Object
+	Dim sMethod as String
+	oStatis = oAssistantDlg.getControl(&quot;StatisticList&quot;)
+	sMethod = oStatis.getSelectedItem()
+	Dim searchDis
+	Dim oSheet
+	Dim oRange, oRanges
+	Dim nonEmpty as String
+	oSheet = ThisComponent.Sheets(0)
+	oRange = oSheet.getCellRangeByName(&quot;A1:AMJ1048576&quot;)
+	
+	&apos; 這是　Calc 內建的 Query Method，目的在於找出儲存格內部值為 String 的 Cell
+	oRanges = oRange.queryContentCells(com.sun.star.sheet.CellFlags.STRING)
+    
+    
+    &apos; 把找到的 Cell 進行過濾
+    Dim oAddrs, oAddr
+    Dim i As Long
+    Dim nRow As Long
+    Dim nCol As long
+    Dim s As String
+    Dim oCell
+    oAddrs() = oRanges.getRangeAddresses()
+  	For i = 0 To UBound(oAddrs())
+ 
+	    REM Get a specific address range
+	    oAddr = oAddrs(i)
+	    For nRow = oAddr.StartRow To oAddr.EndRow
+			For nCol = oAddr.StartColumn To oAddr.EndColumn
+				oCell = oRange.Spreadsheet.getCellByPosition(nCol, nRow)
+				If (target = oCell.getString()) Then
+					If (ThisComponent.supportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;)) Then
+						&apos; 檢查是不是變數(HyperLink)
+						If (checkCalcCellLink(oCell)) Then
+							&apos; 檢查同一列有沒有群組變數(詳細資料)加上去的註解
+							If (checkGroup(oCell) &lt;&gt; &quot;&quot;) Then
+								findCellsByVariableName = oCell.AbsoluteName
+								Exit Function
+							End If
+						End If
+					End If
+				End IF
+			Next
+	    Next
+	Next
+	
+    findCellsByVariableName = &quot;&quot;
+
+End Function
+
+&apos; 透過使用者指定的變數名稱進行全域(A1:AMJ1048576)查找
+Function findGroupNameByVariableName(target) as String
+	IF not ThisComponent.supportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;) Then
+		findGroupNameByVariableName = &quot;&quot;
+		Exit Function
+	END IF
+	Dim oStatis as Object
+	Dim sMethod as String
+	oStatis = oAssistantDlg.getControl(&quot;StatisticList&quot;)
+	sMethod = oStatis.getSelectedItem()
+	Dim searchDis
+	Dim oSheet
+	Dim oRange, oRanges
+	Dim nonEmpty as String
+	oSheet = ThisComponent.Sheets(0)
+	oRange = oSheet.getCellRangeByName(&quot;A1:AMJ1048576&quot;)
+	
+	&apos; 這是　Calc 內建的 Query Method，目的在於找出儲存格內部值為 String 的 Cell
+	oRanges = oRange.queryContentCells(com.sun.star.sheet.CellFlags.STRING)
+    
+    
+    &apos; 把找到的 Cell 進行過濾
+    Dim oAddrs, oAddr
+    Dim i As Long
+    Dim nRow As Long
+    Dim nCol As long
+    Dim s As String
+    Dim oCell
+    Dim groupName as String
+    oAddrs() = oRanges.getRangeAddresses()
+  	For i = 0 To UBound(oAddrs())
+ 
+	    REM Get a specific address range
+	    oAddr = oAddrs(i)
+	    For nRow = oAddr.StartRow To oAddr.EndRow
+			For nCol = oAddr.StartColumn To oAddr.EndColumn
+				oCell = oRange.Spreadsheet.getCellByPosition(nCol, nRow)
+				If (target = oCell.getString()) Then
+					If (ThisComponent.supportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;)) Then
+						&apos; 檢查是不是變數(HyperLink)
+						If (checkCalcCellLink(oCell)) Then
+							&apos; 檢查同一列有沒有群組變數(詳細資料)加上去的註解
+							groupName = checkGroup(oCell)
+							If (groupName &lt;&gt; &quot;&quot;) Then
+								findGroupNameByVariableName = groupName 
+								Exit Function
+							End If
+						End If
+					End If
+				End IF
+			Next
+	    Next
+	Next
+	
+    findGroupNameByVariableName = &quot;&quot;
+
+End Function
+
+&apos;確認是不是群組變數, 如果是群組就回傳群組名稱
+Function checkGroup(aCell) as String
+	Dim result As Object
+	Dim annotations As Object
+	Dim annotationIndex As Long
+	Dim anAnnotation As Object
+	Dim isFound As Boolean
+	
+	checkGroup = &quot;&quot;
+	annotations = aCell.spreadSheet.annotations
+	While ((annotationIndex &lt; annotations.count) and (not isFound))
+		anAnnotation = annotations.getByIndex(annotationIndex)
+		isFound = ((anAnnotation.position.row = aCell.cellAddress.row))
+		If (isFound) Then
+			&apos;annotation access video 	https://www.youtube.com/watch?v=ZpBAsu5MCzU
+			checkGroup = anAnnotation.String
+		End If
+		annotationIndex = annotationIndex + 1
+	Wend
+End Function
+
+&apos;確認群組變數名稱是否有重複
+Function checkGroupNameDuplicated(newName) as Boolean
+	Dim annotations As Object
+	Dim annotationIndex As Long
+	Dim anAnnotation As Object
+	Dim oSelection as Object
+	Dim oSheet as Object
+	Set oSelection = ThisComponent.CurrentSelection
+	Set oSheet = oSelection.Spreadsheet
+	checkGroupNameDuplicated = False
+	annotations = oSheet.annotations
+	While (annotationIndex &lt; annotations.count)
+		anAnnotation = annotations.getByIndex(annotationIndex)
+		If (anAnnotation.String = newName) Then
+			checkGroupNameDuplicated = True
+		End If
+		annotationIndex = annotationIndex + 1
+	Wend
+End Function
+
+&apos; 確認找到的元素是不是 Hyper Link (因為我們就是插入 Hyper Link)
+
+Function CheckCalcCellLink(oCell) as Boolean
+	Dim oText, oParEnum, oParElement
+	Dim oEnum, oElement 
+	oParEnum = oCell.getText().createEnumeration()
+	checkCalcCellLink = False
+	Do While oParEnum.hasMoreElements ()
+		oParElement = oParEnum.nextElement()
+		oEnum = oParElement.createEnumeration()
+		Do While oEnum.hasMoreElements ()
+			oElement = oEnum.nextElement()
+			If oElement.TextPortionType = &quot;TextField&quot; Then
+				If oElement.TextField.supportsService(&quot;com.sun.star.text.TextField.URL&quot;) Then
+					&apos;STRING  Representation = 
+					&apos;STRING  TargetFrame = 
+					&apos;STRING  URL = 
+					CheckCalcCellLink = True
+				End If
+			End If
+		Loop
+	Loop
+End Function
+
+
+&apos; 內部測試用的巨集
+Function TestTest() as String
+	Msgbox(&quot;Hello&quot;)
+	Dim oSelection as Object
+	Dim textField as Object
+	Set oSelection = ThisComponent.getCurrentSelection()
+	textField = oSelection.getTextFields()
+	Msgbox(oSelection.getString())
+	Msgbox(RA_GetFieldType(textField.getByIndex(0)))
+	Dim oField as Object
+	oField = textField.getByIndex(0)
+	Dim sFieldName$, sHint$
+	sFieldName = oField.Representation
+	sHint = oField.TargetFrame
+	Msgbox(sHint)
+	Dim oResource as Object
+	Set oResource = TypeSetting2Resource(sFieldName, sHint)
+
+	With oResource
+		Msgbox(.getValue(&quot;Type&quot;))
+	end with
+End Function
+
+&apos;Return Resource of the Calc variable
+Function getCalcVariableResource(oCell) as Object
+	Dim textField as Object
+	textField = oCell.getTextFields()
+
+	Dim oField as Object
+	oField = textField.getByIndex(0)
+	Dim sFieldName$, sHint$
+	sFieldName = oField.Representation
+	sHint = oField.TargetFrame
+
+	Dim oResource as Object
+	Set oResource = TypeSetting2Resource(sFieldName, sHint)
+	getCalcVariableResource = oResource
+End function
+
+Function isStatisticVariable(oCell) as Boolean
+	Dim oResource as Object
+	oResource = getCalcVariableResource(oCell)
+	isStatisticVariable = False
+	with oResource
+		if .getValue(&quot;Type&quot;) = &quot;Statistic&quot; Then
+			isStatisticVariable = True
+			Exit Function
+		end if
+	end with
+End Function
+
+Function updateGroupVariableList()
+	IF not ThisComponent.supportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;) Then
+		findGroupNameByVariableName = &quot;&quot;
+		Exit Function
+	END IF
+	Dim I
+	Dim allGV() as Object
+	allGV = findAllGroupVariable()
+	if Ubound(allGV) = 1 Then
+		if allGv(0).RealName=&quot;&quot; Then
+			Exit Function
+		end if
+	end if 
+	With oAssistantDlg
+		With .getControl(&quot;GroupVariableList&quot;)
+			if .Model.ItemCount &lt;&gt; 0 Then
+				.Model.removeAllItems()
+			End if
+			Dim gpName as String
+			gpName = &quot;&quot;
+			Dim pos as Long
+			pos = -1
+			Dim itemIndex as Long
+			For I = 0 to Ubound(allGV)-1
+				pos = -1
+				For itemIndex = 0 to .Model.ItemCount-1
+					Dim tmpData as Object
+					if .Model.ItemCount = 0 Then 
+						Exit For
+					end if 
+					tmpData = .Model.getItemData(itemIndex)
+					if tmpData.GroupName = allGV(I).GroupName THen
+						pos = itemIndex
+						
+						Exit for
+					end if  
+				Next
+				
+				if pos = -1 then
+					pos = .Model.ItemCount 
+					.Model.insertItemText(pos, allGV(I).GroupName + &quot; : &quot; + allGV(I).RealName)
+					.Model.setItemData(pos, allGV(I))
+				else
+					Dim space as String
+					space = &quot;&quot;
+					Dim sp as Long
+					For sp = 0 to Len(allGV(I).GroupName)
+						space = space + &quot; &quot;
+					Next
+					.Model.insertItemText(pos+1, space + allGV(I).RealName)
+					.Model.setItemData(pos+1, allGV(I))
+				End if
+			Next
+		End With
+		.getControl(&quot;GroupVariableList&quot;).selectItemPos(0, True)
+	end with
+End Function
+
+&apos; 找到全部的群組變數
+Function findAllGroupVariable() 
+	IF not ThisComponent.supportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;) Then
+		findGroupNameByVariableName = &quot;&quot;
+		Exit Function
+	END IF
+	Dim oSheet
+	Dim oRange, oRanges
+	Dim nonEmpty as String
+	oSheet = ThisComponent.Sheets(0)
+	oRange = oSheet.getCellRangeByName(&quot;A1:AMJ1048576&quot;)
+	
+	&apos; 這是　Calc 內建的 Query Method，目的在於找出儲存格內部值為 String 的 Cell
+	oRanges = oRange.queryContentCells(com.sun.star.sheet.CellFlags.STRING)
+    
+    
+    &apos; 把找到的 Cell 進行過濾
+    Dim oAddrs, oAddr
+    Dim i As Long
+    Dim nRow As Long
+    Dim nCol As long
+    Dim s As String
+    Dim oCell
+    oAddrs() = oRanges.getRangeAddresses()
+    Dim result(1) as Object
+    result(0) = createObject(&quot;GroupVariable&quot;)
+	result(0).RealName = &quot;&quot;
+	result(0).GroupName = &quot;&quot;
+    Dim index As Long
+    index = 0
+  	For i = 0 To UBound(oAddrs())
+ 
+	    REM Get a specific address range
+	    oAddr = oAddrs(i)
+	    For nRow = oAddr.StartRow To oAddr.EndRow
+			For nCol = oAddr.StartColumn To oAddr.EndColumn
+				oCell = oRange.Spreadsheet.getCellByPosition(nCol, nRow)
+				If (True) Then
+					If (ThisComponent.supportsService(&quot;com.sun.star.sheet.SpreadsheetDocument&quot;)) Then
+						&apos; 檢查是不是變數(HyperLink)
+						
+						If (checkCalcCellLink(oCell)) Then
+							&apos; 檢查同一列有沒有群組變數(詳細資料)加上去的註解
+							
+							Dim gpName as String
+							gpName = checkGroup(oCell)
+							If (gpName &lt;&gt; &quot;&quot; and isStatisticVariable(oCell) &lt;&gt; True )Then
+								result(index) = createObject(&quot;GroupVariable&quot;)
+								result(index).RealName = oCell.getString()
+								result(index).GroupName = gpName
+								index = index + 1
+								if index &gt; Ubound(result)-1 Then
+									ReDim Preserve result(0 to index) as Object
+								END if
+							End If
+						End If
+					End If
+				End IF
+			Next
+	    Next
+	Next		
+	findAllGroupVariable = result()
+End Function
+
 &apos; 刪除欄位
 Function RA_DelField()
 	Dim nPos As Long
@@ -381,8 +876,10 @@ Function RA_DelField()
 		nPos = Val(.Tag)
 		Set oField = .getItemData(nPos)
 		oField.dispose()
+		
 	End With
 	RA_ClearAssistantDialog()
+	oAssistantDlg.getControl(&quot;DelField&quot;).setEnable(False)
 End Function
 
 Function getCellType(oCell As Object, ByRef sFormat, ByRef sApiHelp) As String
@@ -422,6 +919,9 @@ Function getCellType(oCell As Object, ByRef sFormat, ByRef sApiHelp) As String
 End Function
 
 Function SyncFormatList(Optional oCell As Object)
+	If isNull(oAssistantDlg) Then
+		Exit Function
+	End if
 	Dim oSelection As Object
 	Dim I As Long
 	Dim oFormats As Object
@@ -440,9 +940,8 @@ Function SyncFormatList(Optional oCell As Object)
 		End If
 		Set oCell = oSelection
 	End If
-
 	nNumberFormat = oCell.NumberFormat
-	Set oFList = oAssistantDlg.getControl(&quot;FormatList&quot;)
+	oFList = oAssistantDlg.getControl(&quot;FormatList&quot;)
 	If (nNumberFormat = 0) Then
 		oFList.selectItemPos(0, True)
 		Exit Function
@@ -495,6 +994,27 @@ Function FormatList_change(oEvent As com.sun.star.awt.ItemEvent)
 	
 End Function
 
+
+&apos; 統計資料列表選項變更的 callback 
+Function StatisticList_onChange(oEvent As com.sun.star.awt.ItemEvent)
+	Dim oSelection As Object
+	Dim oFList As Object
+	Dim oType As Object
+
+	Set oSelection = ThisComponent.currentSelection
+	If (Not oSelection.supportsService(&quot;com.sun.star.sheet.SheetCell&quot;)) Then
+		Exit Function
+	End If
+
+	Set oFList = oEvent.Source
+	With oFList.Model
+		Set oType = .getItemData(oEvent.Selected)
+		&apos;oSelection.NumberFormat = oType.DefaultKey
+		ShowApiHelp(oType.Description)
+	End With
+	
+End Function
+
 Private Function m_ShowFormatListApiHelp()
 	Dim oType As Object
 
@@ -514,6 +1034,7 @@ Function DetailButton_OnClick(oEvent As Object)
 	Set oDoc = ThisComponent
 	sDocType = Tools.Misc.getDocumentType(oDoc)
 
+	
 	Select Case oAssistantDlg.Model.Tag
 		Case &quot;swriter&quot;
 			RA_MakeAnnotationField(ThisComponent, _
@@ -532,7 +1053,14 @@ Function DetailButton_OnClick(oEvent As Object)
 			Set oSheet = oSelection.Spreadsheet
 			Set oRangeAddr = oSelection.RangeAddress
 			Set oAnnotations = oSheet.Annotations
-
+			&apos;Make sure that the group variable name is unique
+			Dim newName 
+			newName = oAssistantDlg.getControl(&quot;DetailText&quot;).getText()
+			If checkGroupNameDuplicated(newName) Then
+				Msgbox(&quot;群組變數名稱已存在&quot;)	
+				Exit Function
+			End If
+			
 			&apos; 設定群組
 			oSheet.group(oRangeAddr, com.sun.star.table.TableOrientation.ROWS)
 
@@ -576,7 +1104,7 @@ Function Type_Change(Optional oEvent As Object)
 	m_Change_BooleanControls()
 	m_Change_ImageControls()
 	m_Change_EnumControls()
-
+	m_Change_StatisticControls()
 End Function
 
 Private Function m_Change_FormatControls()
@@ -585,13 +1113,33 @@ Private Function m_Change_FormatControls()
 	With oAssistantDlg.Model
 		bSW = .StringType.State
 		.FormatList.Enabled = bSW
+		.StringType.Label = &quot;一~般&quot;
 		If (.Tag &lt;&gt; &quot;scalc&quot;) Then
 			If (bSW) Then
 				ShowApiHelp(TYPE_NORMAL)
 			End If
 		Else
+			.StringType.Label = &quot;格~式&quot;
 			If (bSW) Then
 				m_ShowFormatListApiHelp()
+			End If
+		End If
+	End With
+
+End Function
+
+
+Private Function m_Change_StatisticControls()
+	Dim bSW As Boolean
+
+	With oAssistantDlg.Model
+		If (.Tag = &quot;scalc&quot;) Then
+			bSW = .StatisticType.State
+			.StatisticList.Enabled = bSW
+			.GroupVariableList.Enabled = bSW
+		
+			If (bSW) Then
+				ShowApiHelp(TYPE_STATISTIC)
 			End If
 		End If
 	End With
@@ -691,6 +1239,9 @@ Function ItemList_onChange(oEvent As Object)
 End Function
 
 Function RA_FieldSelect(Optional oField As Object)
+	If isNull(oAssistantDlg) Then
+		Exit Function
+	End if
 	Dim sName As String, sHint As String
 	Dim nItemPos As Long
 	Dim nLegalFields As Long
@@ -753,6 +1304,7 @@ Function RA_FieldSelect(Optional oField As Object)
 
 End Function
 
+&apos;還原選中的欄位數值到 dialog
 Function RA_ParserField(oField As Object)
 	Dim oResource As Object
 	Dim aItems() As String
@@ -782,6 +1334,8 @@ Function RA_ParserField(oField As Object)
 				oAssistantDlg.getControl(&quot;ImageType&quot;).setState(True)
 			Case &quot;Enum&quot;
 				oAssistantDlg.getControl(&quot;EnumType&quot;).setState(True)
+			Case &quot;Statistic&quot;
+				oAssistantDlg.getControl(&quot;StatisticType&quot;).setState(True)
 			Case Else
 				oAssistantDlg.getControl(&quot;StringType&quot;).setState(True)
 		End Select
@@ -800,8 +1354,31 @@ Function RA_ParserField(oField As Object)
 			If (oAssistantDlg.getControl(&quot;BooleanType&quot;).getState()) Then
 				oAssistantDlg.getControl(&quot;BooleanTrueItem&quot;).setText(aItems(0))
 				oAssistantDlg.getControl(&quot;BooleanFalseItem&quot;).setText(aItems(1))
+			ElseIF oAssistantDlg.getControl(&quot;StatisticType&quot;).getState() Then
+				Dim itemIndex as Long
+				itemIndex = 0
+				Dim gpName as String
+				gpName = .getValue(&quot;GroupName&quot;)
+				with oAssistantDlg.getControl(&quot;GroupVariableList&quot;)
+					for itemIndex=0 to .Model.ItemCount-1
+						Dim itemData as Object
+						itemData = .Model.getItemData(itemIndex)
+						if itemData.RealName = aItems(0) and itemData.GroupName = gpName Then
+							.selectItemPos(itemIndex, True)
+							Exit for
+						ENd if 
+					Next itemIndex
+				end with
 			Else
 				oAssistantDlg.getControl(&quot;ItemList&quot;).model.StringItemList() = aItems()
+			End If
+		End If
+		
+		If (.hasByName(&quot;Method&quot;)) Then
+			Dim methodName as String
+			methodName = .getValue(&quot;Method&quot;)
+			If (oAssistantDlg.getControl(&quot;StatisticType&quot;).getState()) Then
+				oAssistantDlg.getControl(&quot;StatisticList&quot;).selectItem(methodName, true)
 			End If
 		End If
 

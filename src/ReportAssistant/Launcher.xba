@@ -6,7 +6,7 @@ Option Explicit
 Public Const LIB_NAME As String = &quot;ReportAssistant&quot;	&apos; 巨集套件名稱
 Public Const USE_RESOURCE_DB As Boolean = True	&apos; 是否使用資源檔保存資料
 
-Public Const DEBUG_MODE As Boolean = False		&apos; True:啟用除錯模式
+Public Const DEBUG_MODE As Boolean = True		&apos; True:啟用除錯模式
 Public Const DEBUG_TOOL	As String = &quot;MRILib&quot;	&apos; or XrayTool, or Tools
 
 Public MY_DATA_DIR As String

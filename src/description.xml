@@ -3,11 +3,11 @@
  xmlns="http://openoffice.org/extensions/description/2006"
  xmlns:dep="http://openoffice.org/extensions/description/2006"
  xmlns:xlink="http://www.w3.org/1999/xlink">
-	<identifier value="vnd.basicaddonbuilder.reportassistant"/>
-	<version value="1.0.3"/>
-	<!-- <dependencies>
-		<OpenOffice.org-minimal-version value="2.1" dep:name="OpenOffice.org 2.1"/>
-	</dependencies> -->
+	<identifier value="vnd.basicaddonbuilder.ReportAssistant"/>
+	<version value="1.0.9"/>
+	<dependencies>
+        <OpenOffice.org-minimal-version value="3.4" d:name="OpenOffice.org 3.4" />
+    </dependencies>
 	<display-name>
 		<name lang="zh-tw">國發會範本工具</name>
 		<name lang="en">NDC Template Tools</name>

@@ -3,11 +3,11 @@
 <script:module xmlns:script="http://openoffice.org/2000/script" script:name="Preference" script:language="StarBasic" script:moduleType="normal">REM  *****  BASIC  *****
 Option Explicit
 
-Dim oPreferenceDialog As Object
+Public oPreferenceDialog As Object
 
-Private Const Preference_Personal_Primary_Key = &quot;/Preference/Personal&quot;	&apos; 個人資訊
-Private Const Preference_FontFamily_Primary_Key = &quot;/Preference/Font&quot;	&apos; 偏好字型
-Private Const Preference_Path_Primary_Key = &quot;/Preference/Path&quot;	&apos; 目錄管理
+Public Const Preference_Personal_Primary_Key = &quot;/Preference/Personal&quot;	&apos; 個人資訊
+Public Const Preference_FontFamily_Primary_Key = &quot;/Preference/Font&quot;	&apos; 偏好字型
+Public Const Preference_Path_Primary_Key = &quot;/Preference/Path&quot;	&apos; 目錄管理
 
 Sub Main
 	Dim aFontList() As String

@@ -1,46 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
-<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:style-id="0" dlg:id="ApplyPersonalDialog" dlg:left="113" dlg:top="50" dlg:width="167" dlg:height="198" dlg:closeable="true" dlg:moveable="true" dlg:title="套用個人資料">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:style-id="0" dlg:id="ApplyPersonalDialog" dlg:left="113" dlg:top="50" dlg:width="167" dlg:height="198" dlg:help-text="&amp;0.ApplyPersonalDialog.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;1.ApplyPersonalDialog.Title">
  <dlg:styles>
   <dlg:style dlg:style-id="0" dlg:font-height="10"/>
  </dlg:styles>
  <dlg:bulletinboard>
-  <dlg:text dlg:style-id="0" dlg:id="Label1" dlg:tab-index="18" dlg:left="6" dlg:top="6" dlg:width="23" dlg:height="10" dlg:page="1" dlg:value="標題" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
-  <dlg:text dlg:style-id="0" dlg:id="Label2" dlg:tab-index="19" dlg:left="6" dlg:top="22" dlg:width="23" dlg:height="10" dlg:page="1" dlg:value="主旨" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
-  <dlg:text dlg:style-id="0" dlg:id="Label3" dlg:tab-index="20" dlg:left="6" dlg:top="37" dlg:width="23" dlg:height="10" dlg:page="1" dlg:value="標籤" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
-  <dlg:text dlg:style-id="0" dlg:id="Label4" dlg:tab-index="21" dlg:left="6" dlg:top="53" dlg:width="23" dlg:height="10" dlg:page="1" dlg:value="註解" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
-  <dlg:textfield dlg:style-id="0" dlg:id="TitleField" dlg:tab-index="0" dlg:left="32" dlg:top="6" dlg:width="129" dlg:height="12" dlg:valign="center"/>
-  <dlg:textfield dlg:style-id="0" dlg:id="KeywordsField" dlg:tab-index="2" dlg:left="32" dlg:top="37" dlg:width="129" dlg:height="12" dlg:help-text="可輸入多個標籤，各標籤用逗號&quot;,&quot;分開" dlg:valign="center"/>
-  <dlg:textfield dlg:style-id="0" dlg:id="DescriptionField" dlg:tab-index="3" dlg:left="32" dlg:top="53" dlg:width="129" dlg:height="30" dlg:multiline="true"/>
-  <dlg:textfield dlg:style-id="0" dlg:id="SubjectField" dlg:tab-index="1" dlg:left="32" dlg:top="22" dlg:width="129" dlg:height="12" dlg:valign="center"/>
-  <dlg:titledbox dlg:style-id="0" dlg:id="FrameControl1" dlg:tab-index="22" dlg:left="4" dlg:top="85" dlg:width="159" dlg:height="88">
-   <dlg:title dlg:value="套用個人資料"/>
+  <dlg:text dlg:style-id="0" dlg:id="Label1" dlg:tab-index="18" dlg:left="6" dlg:top="6" dlg:width="23" dlg:height="10" dlg:page="1" dlg:help-text="&amp;2.ApplyPersonalDialog.Label1.HelpText" dlg:value="&amp;3.ApplyPersonalDialog.Label1.Label" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
+  <dlg:text dlg:style-id="0" dlg:id="Label2" dlg:tab-index="19" dlg:left="6" dlg:top="22" dlg:width="23" dlg:height="10" dlg:page="1" dlg:help-text="&amp;4.ApplyPersonalDialog.Label2.HelpText" dlg:value="&amp;5.ApplyPersonalDialog.Label2.Label" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
+  <dlg:text dlg:style-id="0" dlg:id="Label3" dlg:tab-index="20" dlg:left="6" dlg:top="37" dlg:width="23" dlg:height="10" dlg:page="1" dlg:help-text="&amp;6.ApplyPersonalDialog.Label3.HelpText" dlg:value="&amp;7.ApplyPersonalDialog.Label3.Label" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
+  <dlg:text dlg:style-id="0" dlg:id="Label4" dlg:tab-index="21" dlg:left="6" dlg:top="53" dlg:width="23" dlg:height="10" dlg:page="1" dlg:help-text="&amp;8.ApplyPersonalDialog.Label4.HelpText" dlg:value="&amp;9.ApplyPersonalDialog.Label4.Label" dlg:valign="center" dlg:tabstop="false" dlg:nolabel="true"/>
+  <dlg:textfield dlg:style-id="0" dlg:id="TitleField" dlg:tab-index="0" dlg:left="32" dlg:top="6" dlg:width="129" dlg:height="12" dlg:help-text="&amp;10.ApplyPersonalDialog.TitleField.HelpText" dlg:valign="center" dlg:value="&amp;11.ApplyPersonalDialog.TitleField.Text"/>
+  <dlg:textfield dlg:style-id="0" dlg:id="KeywordsField" dlg:tab-index="2" dlg:left="32" dlg:top="37" dlg:width="129" dlg:height="12" dlg:help-text="&amp;12.ApplyPersonalDialog.KeywordsField.HelpText" dlg:valign="center" dlg:value="&amp;13.ApplyPersonalDialog.KeywordsField.Text"/>
+  <dlg:textfield dlg:style-id="0" dlg:id="DescriptionField" dlg:tab-index="3" dlg:left="32" dlg:top="53" dlg:width="129" dlg:height="30" dlg:help-text="&amp;14.ApplyPersonalDialog.DescriptionField.HelpText" dlg:multiline="true" dlg:value="&amp;15.ApplyPersonalDialog.DescriptionField.Text"/>
+  <dlg:textfield dlg:style-id="0" dlg:id="SubjectField" dlg:tab-index="1" dlg:left="32" dlg:top="22" dlg:width="129" dlg:height="12" dlg:help-text="&amp;16.ApplyPersonalDialog.SubjectField.HelpText" dlg:valign="center" dlg:value="&amp;17.ApplyPersonalDialog.SubjectField.Text"/>
+  <dlg:titledbox dlg:style-id="0" dlg:id="FrameControl1" dlg:tab-index="22" dlg:left="4" dlg:top="85" dlg:width="159" dlg:height="88" dlg:help-text="&amp;18.ApplyPersonalDialog.FrameControl1.HelpText">
+   <dlg:title dlg:value="&amp;19.ApplyPersonalDialog.FrameControl1.Label"/>
   </dlg:titledbox>
-  <dlg:textfield dlg:id="DeptName" dlg:tab-index="5" dlg:disabled="true" dlg:left="42" dlg:top="97" dlg:width="118" dlg:height="10"/>
-  <dlg:textfield dlg:id="DeptAddress" dlg:tab-index="7" dlg:disabled="true" dlg:left="42" dlg:top="109" dlg:width="118" dlg:height="10"/>
-  <dlg:textfield dlg:id="Contact" dlg:tab-index="9" dlg:left="42" dlg:top="121" dlg:width="118" dlg:height="10"/>
-  <dlg:textfield dlg:id="Email" dlg:tab-index="11" dlg:left="42" dlg:top="133" dlg:width="118" dlg:height="10"/>
-  <dlg:textfield dlg:id="FaxNo" dlg:tab-index="15" dlg:disabled="true" dlg:left="42" dlg:top="157" dlg:width="118" dlg:height="10"/>
-  <dlg:textfield dlg:id="TelNo" dlg:tab-index="13" dlg:disabled="true" dlg:left="42" dlg:top="145" dlg:width="118" dlg:height="10"/>
-  <dlg:checkbox dlg:id="CheckDeptName" dlg:tab-index="4" dlg:left="8" dlg:top="98" dlg:width="32" dlg:height="8" dlg:value="~機關名稱：" dlg:valign="bottom" dlg:checked="false">
+  <dlg:textfield dlg:id="DeptName" dlg:tab-index="5" dlg:disabled="true" dlg:left="42" dlg:top="97" dlg:width="118" dlg:height="10" dlg:help-text="&amp;20.ApplyPersonalDialog.DeptName.HelpText" dlg:value="&amp;21.ApplyPersonalDialog.DeptName.Text"/>
+  <dlg:textfield dlg:id="DeptAddress" dlg:tab-index="7" dlg:disabled="true" dlg:left="42" dlg:top="109" dlg:width="118" dlg:height="10" dlg:help-text="&amp;22.ApplyPersonalDialog.DeptAddress.HelpText" dlg:value="&amp;23.ApplyPersonalDialog.DeptAddress.Text"/>
+  <dlg:textfield dlg:id="Contact" dlg:tab-index="9" dlg:left="42" dlg:top="121" dlg:width="118" dlg:height="10" dlg:help-text="&amp;24.ApplyPersonalDialog.Contact.HelpText" dlg:value="&amp;25.ApplyPersonalDialog.Contact.Text"/>
+  <dlg:textfield dlg:id="Email" dlg:tab-index="11" dlg:left="42" dlg:top="133" dlg:width="118" dlg:height="10" dlg:help-text="&amp;26.ApplyPersonalDialog.Email.HelpText" dlg:value="&amp;27.ApplyPersonalDialog.Email.Text"/>
+  <dlg:textfield dlg:id="FaxNo" dlg:tab-index="15" dlg:disabled="true" dlg:left="42" dlg:top="157" dlg:width="118" dlg:height="10" dlg:help-text="&amp;28.ApplyPersonalDialog.FaxNo.HelpText" dlg:value="&amp;29.ApplyPersonalDialog.FaxNo.Text"/>
+  <dlg:textfield dlg:id="TelNo" dlg:tab-index="13" dlg:disabled="true" dlg:left="42" dlg:top="145" dlg:width="118" dlg:height="10" dlg:help-text="&amp;30.ApplyPersonalDialog.TelNo.HelpText" dlg:value="&amp;31.ApplyPersonalDialog.TelNo.Text"/>
+  <dlg:checkbox dlg:id="CheckDeptName" dlg:tab-index="4" dlg:left="8" dlg:top="98" dlg:width="32" dlg:height="8" dlg:help-text="&amp;32.ApplyPersonalDialog.CheckDeptName.HelpText" dlg:value="&amp;33.ApplyPersonalDialog.CheckDeptName.Label" dlg:valign="bottom" dlg:checked="false">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.ApplyPersonal.CheckBox_action?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:checkbox>
-  <dlg:checkbox dlg:id="CheckDeptAddress" dlg:tab-index="6" dlg:left="8" dlg:top="110" dlg:width="32" dlg:height="8" dlg:value="~機關地址：" dlg:valign="bottom" dlg:checked="false">
+  <dlg:checkbox dlg:id="CheckDeptAddress" dlg:tab-index="6" dlg:left="8" dlg:top="110" dlg:width="32" dlg:height="8" dlg:help-text="&amp;34.ApplyPersonalDialog.CheckDeptAddress.HelpText" dlg:value="&amp;35.ApplyPersonalDialog.CheckDeptAddress.Label" dlg:valign="bottom" dlg:checked="false">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.ApplyPersonal.CheckBox_action?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:checkbox>
-  <dlg:checkbox dlg:id="CheckContact" dlg:tab-index="8" dlg:left="8" dlg:top="122" dlg:width="32" dlg:height="8" dlg:value="~作者：" dlg:valign="bottom" dlg:checked="true">
+  <dlg:checkbox dlg:id="CheckContact" dlg:tab-index="8" dlg:left="8" dlg:top="122" dlg:width="32" dlg:height="8" dlg:help-text="&amp;36.ApplyPersonalDialog.CheckContact.HelpText" dlg:value="&amp;37.ApplyPersonalDialog.CheckContact.Label" dlg:valign="bottom" dlg:checked="true">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.ApplyPersonal.CheckBox_action?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:checkbox>
-  <dlg:checkbox dlg:id="CheckEmail" dlg:tab-index="10" dlg:left="8" dlg:top="134" dlg:width="32" dlg:height="8" dlg:value="~電子郵件：" dlg:valign="bottom" dlg:checked="true">
+  <dlg:checkbox dlg:id="CheckEmail" dlg:tab-index="10" dlg:left="8" dlg:top="134" dlg:width="32" dlg:height="8" dlg:help-text="&amp;38.ApplyPersonalDialog.CheckEmail.HelpText" dlg:value="&amp;39.ApplyPersonalDialog.CheckEmail.Label" dlg:valign="bottom" dlg:checked="true">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.ApplyPersonal.CheckBox_action?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:checkbox>
-  <dlg:checkbox dlg:id="CheckTelNo" dlg:tab-index="12" dlg:left="8" dlg:top="146" dlg:width="32" dlg:height="8" dlg:value="~電話：" dlg:valign="bottom" dlg:checked="false">
+  <dlg:checkbox dlg:id="CheckTelNo" dlg:tab-index="12" dlg:left="8" dlg:top="146" dlg:width="32" dlg:height="8" dlg:help-text="&amp;40.ApplyPersonalDialog.CheckTelNo.HelpText" dlg:value="&amp;41.ApplyPersonalDialog.CheckTelNo.Label" dlg:valign="bottom" dlg:checked="false">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.ApplyPersonal.CheckBox_action?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:checkbox>
-  <dlg:checkbox dlg:id="CheckFaxNo" dlg:tab-index="14" dlg:left="8" dlg:top="158" dlg:width="32" dlg:height="8" dlg:value="~傳真：" dlg:valign="bottom" dlg:checked="false">
+  <dlg:checkbox dlg:id="CheckFaxNo" dlg:tab-index="14" dlg:left="8" dlg:top="158" dlg:width="32" dlg:height="8" dlg:help-text="&amp;42.ApplyPersonalDialog.CheckFaxNo.HelpText" dlg:value="&amp;43.ApplyPersonalDialog.CheckFaxNo.Label" dlg:valign="bottom" dlg:checked="false">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.ApplyPersonal.CheckBox_action?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:checkbox>
-  <dlg:button dlg:style-id="0" dlg:id="OkButton" dlg:tab-index="16" dlg:left="90" dlg:top="181" dlg:width="30" dlg:height="12" dlg:value="確定(~O)" dlg:button-type="ok"/>
-  <dlg:button dlg:style-id="0" dlg:id="CancelButton" dlg:tab-index="17" dlg:left="129" dlg:top="181" dlg:width="30" dlg:height="12" dlg:value="取消(~C)" dlg:button-type="cancel"/>
+  <dlg:button dlg:style-id="0" dlg:id="OkButton" dlg:tab-index="16" dlg:left="90" dlg:top="181" dlg:width="30" dlg:height="12" dlg:help-text="&amp;44.ApplyPersonalDialog.OkButton.HelpText" dlg:value="&amp;45.ApplyPersonalDialog.OkButton.Label" dlg:button-type="ok"/>
+  <dlg:button dlg:style-id="0" dlg:id="CancelButton" dlg:tab-index="17" dlg:left="129" dlg:top="181" dlg:width="30" dlg:height="12" dlg:help-text="&amp;46.ApplyPersonalDialog.CancelButton.HelpText" dlg:value="&amp;47.ApplyPersonalDialog.CancelButton.Label" dlg:button-type="cancel"/>
  </dlg:bulletinboard>
 </dlg:window>

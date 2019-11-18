@@ -213,6 +213,8 @@ Function RA_MakeCellField(oDoc As Object, sFieldText As String, sHint as String)
 	args1(4).Name = &quot;Hyperlink.Type&quot;
 	args1(4).Value = 1
 	oDispatcher.executeDispatch(oFrame, &quot;.uno:SetHyperlink&quot;, &quot;&quot;, 0, args1())
+	oDispatcher.executeDispatch(oFrame, &quot;.uno:JumpToNextCell&quot;, &quot;&quot;, 0, Array())
+
 
 End Function
 
@@ -275,7 +277,7 @@ Function Resource2TypeSetting(oResource As Object) As String
 	Dim I As Long
 	Dim sValue As String
 
-	aElements = Array(&quot;Type&quot;, &quot;Format&quot;, &quot;Items&quot;, &quot;Size&quot;, &quot;Description&quot;, &quot;ApiHelp&quot;)
+	aElements = Array(&quot;Type&quot;, &quot;Format&quot;, &quot;Items&quot;, &quot;Size&quot;, &quot;Description&quot;, &quot;ApiHelp&quot;, &quot;Method&quot;, &quot;Column&quot;, &quot;GroupName&quot;)
 	With oResource
 		I = 0
 		For Each sElm In aElements

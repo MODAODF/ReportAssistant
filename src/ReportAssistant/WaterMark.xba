@@ -4,8 +4,8 @@
 
 Option Explicit
 
-Private oDialog As Object
-Private oWaterMark As Object
+Public oDialog As Object
+Public oWaterMark As Object
 
 Sub Main
 	Dim oEvent As New com.sun.star.awt.ItemEvent

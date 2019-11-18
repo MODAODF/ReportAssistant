@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dlg:window PUBLIC "-//OpenOffice.org//DTD OfficeDocument 1.0//EN" "dialog.dtd">
-<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="DesignToolsDialog" dlg:left="113" dlg:top="18" dlg:width="164" dlg:height="189" dlg:closeable="true" dlg:moveable="true" dlg:title=" 範本設計精靈">
+<dlg:window xmlns:dlg="http://openoffice.org/2000/dialog" xmlns:script="http://openoffice.org/2000/script" dlg:id="DesignToolsDialog" dlg:left="113" dlg:top="18" dlg:width="164" dlg:height="189" dlg:help-text="&amp;215.DesignToolsDialog.HelpText" dlg:closeable="true" dlg:moveable="true" dlg:title="&amp;216.DesignToolsDialog.Title">
  <dlg:styles>
   <dlg:style dlg:style-id="0" dlg:font-height="6"/>
  </dlg:styles>
  <dlg:bulletinboard>
-  <dlg:button dlg:style-id="0" dlg:id="BindingLineButton" dlg:tab-index="1" dlg:left="112" dlg:top="0" dlg:width="22" dlg:height="18" dlg:help-text="裝訂線" dlg:tabstop="false" dlg:value="▼" dlg:image-position="left-center" dlg:image-align="left">
+  <dlg:button dlg:style-id="0" dlg:id="BindingLineButton" dlg:tab-index="1" dlg:left="112" dlg:top="0" dlg:width="22" dlg:height="18" dlg:help-text="&amp;217.DesignToolsDialog.BindingLineButton.HelpText" dlg:tabstop="false" dlg:value="&amp;218.DesignToolsDialog.BindingLineButton.Label" dlg:image-position="left-center" dlg:image-align="left">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.DesignTools.BindingLineButton_click?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:button>
-  <dlg:button dlg:style-id="0" dlg:id="PersonalButton" dlg:tab-index="2" dlg:left="68" dlg:top="0" dlg:width="22" dlg:height="18" dlg:help-text="個人資訊" dlg:tabstop="false" dlg:value="▼" dlg:image-position="left-center" dlg:image-align="left">
+  <dlg:button dlg:style-id="0" dlg:id="PersonalButton" dlg:tab-index="2" dlg:left="68" dlg:top="0" dlg:width="22" dlg:height="18" dlg:help-text="&amp;219.DesignToolsDialog.PersonalButton.HelpText" dlg:tabstop="false" dlg:value="&amp;220.DesignToolsDialog.PersonalButton.Label" dlg:image-position="left-center" dlg:image-align="left">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.DesignTools.PersonButton_click?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:button>
-  <dlg:button dlg:style-id="0" dlg:id="WaterMarkButton" dlg:tab-index="3" dlg:left="91" dlg:top="0" dlg:width="22" dlg:height="18" dlg:help-text="浮水印" dlg:tabstop="false" dlg:value="▼" dlg:image-position="left-center" dlg:image-align="left">
+  <dlg:button dlg:style-id="0" dlg:id="WaterMarkButton" dlg:tab-index="3" dlg:left="91" dlg:top="0" dlg:width="22" dlg:height="18" dlg:help-text="&amp;221.DesignToolsDialog.WaterMarkButton.HelpText" dlg:tabstop="false" dlg:value="&amp;222.DesignToolsDialog.WaterMarkButton.Label" dlg:image-position="left-center" dlg:image-align="left">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.DesignTools.WaterMarkButton_click?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:button>
-  <dlg:button dlg:style-id="0" dlg:id="ParagraphStylesButton" dlg:tab-index="0" dlg:left="0" dlg:top="0" dlg:width="16" dlg:height="18" dlg:help-text="段落式樣" dlg:valign="bottom">
+  <dlg:button dlg:style-id="0" dlg:id="ParagraphStylesButton" dlg:tab-index="0" dlg:left="0" dlg:top="0" dlg:width="16" dlg:height="18" dlg:help-text="&amp;223.DesignToolsDialog.ParagraphStylesButton.HelpText" dlg:value="&amp;224.DesignToolsDialog.ParagraphStylesButton.Label" dlg:valign="bottom">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.DesignTools.ParagraphStylesButton_click?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:button>
-  <dlg:button dlg:style-id="0" dlg:id="CommandButton1" dlg:tab-index="4" dlg:left="32" dlg:top="0" dlg:width="16" dlg:height="18" dlg:help-text="目錄與標題" dlg:valign="bottom">
+  <dlg:button dlg:style-id="0" dlg:id="CommandButton1" dlg:tab-index="4" dlg:left="32" dlg:top="0" dlg:width="16" dlg:height="18" dlg:help-text="&amp;225.DesignToolsDialog.CommandButton1.HelpText" dlg:value="&amp;226.DesignToolsDialog.CommandButton1.Label" dlg:valign="bottom">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.DesignTools.ParagraphStylesButton_click?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:button>
-  <dlg:button dlg:style-id="0" dlg:id="NumberingStylesButton" dlg:tab-index="5" dlg:left="16" dlg:top="0" dlg:width="16" dlg:height="18" dlg:help-text="清單式樣" dlg:valign="bottom">
+  <dlg:button dlg:style-id="0" dlg:id="NumberingStylesButton" dlg:tab-index="5" dlg:left="16" dlg:top="0" dlg:width="16" dlg:height="18" dlg:help-text="&amp;227.DesignToolsDialog.NumberingStylesButton.HelpText" dlg:value="&amp;228.DesignToolsDialog.NumberingStylesButton.Label" dlg:valign="bottom">
    <script:event script:event-name="on-performaction" script:macro-name="vnd.sun.star.script:ReportAssistant.DesignTools.NumberingStylesButton_click?language=Basic&amp;location=application" script:language="Script"/>
   </dlg:button>
  </dlg:bulletinboard>

@@ -15,12 +15,12 @@ Function ReportAssistantButton_click(oEvent As com.sun.star.awt.ActionEvent)
 		End If
 		.Step = 1
 		If (.Tag = &quot;scalc&quot;) Then
-			.StringType.Label = &quot;格式&quot;
+			
 			.AdvanceSetting.EnableVisible = True
 			.FormatList.EnableVisible = True
 			.DelField.EnableVisible = False
 		Else
-			.StringType.Label = &quot;一般&quot;
+			
 			.AdvanceSetting.EnableVisible = False
 			.FormatList.EnableVisible = False
 			.DelField.EnableVisible = True

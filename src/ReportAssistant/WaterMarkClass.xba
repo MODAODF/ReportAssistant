@@ -304,9 +304,9 @@ End Function
 Function hasImageWaterMark() As Boolean
 	hasImageWaterMark = False
 
-	If (_oPageStyle.BackGraphicURL &lt;&gt; &quot;&quot;) Then
-		hasImageWaterMark = True
-	End If
+	&apos;If (_oPageStyle.BackGraphicURL &lt;&gt; &quot;&quot;) Then
+	&apos;	hasImageWaterMark = True
+	&apos;End If
 
 End Function
 
@@ -368,19 +368,26 @@ End Function
 
 Function setPictureWaterMark()
 	Dim sWaterMarkURL As String
-	Dim sBitmapURL As String
 	Dim oGraphic As Object
 	Dim oScopeSize As New com.sun.star.awt.Size
 	Dim oNewSize  As com.sun.star.awt.Size
-
+	Dim sBitmapURL
+	
+	&apos;If TypeName(_oBitMaps.getElementType()) = &quot;String&quot; Then
+	&apos;	Dim sBitmapURL As String
+	&apos;Else
+	&apos;	Dim sBitmapURL As Object
+	&apos;End if
 	&apos; 有指定圖片路徑
 	If (_sImagePath &lt;&gt; &quot;&quot;) Then
 		sWaterMarkURL = ConvertToURL(_sImagePath)	&apos; 轉換成統一的 URL 格式
 		removePictureWaterMark()	&apos; 移除先前的浮水印
 		With _oBitMaps
 			If (.hasByName(WATERMARK_NAME)) Then
+				msgbox &quot;replace&quot;
 				.replaceByName(WATERMARK_NAME, sWaterMarkURL)
 			Else
+				msgbox &quot;new&quot;
 				.insertByName(WATERMARK_NAME, sWaterMarkURL)
 			End If
 			sBitmapURL = .getByName(WATERMARK_NAME)	&apos; 取得內部 URL (vnd.sun.star.GraphicObject:....)
