@@ -1250,6 +1250,7 @@ Function RA_FieldSelect(Optional oField As Object)
 
 	&apos; 沒有傳參數，就清除所有欄位
 	If (IsMissing(oField)) Then
+		oAssistantDlg.getControl(&quot;DelField&quot;).setEnable(False)
 		RA_ClearAssistantDialog()
 		Exit Function
 	End If

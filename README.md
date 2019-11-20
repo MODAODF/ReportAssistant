@@ -13,3 +13,9 @@ NDC Template Tools 國發會範本工具
 	2. 選擇檔案按右鍵~選Extract All~
 	3. 進入解壓目錄
 	4. 選擇runoxt.bat~doubleclick 或按 Enter 執行
+
+##　Using python to create ext
+
+```
+python create_ext.py
+```

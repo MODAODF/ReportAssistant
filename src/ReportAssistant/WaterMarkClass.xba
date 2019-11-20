@@ -384,10 +384,10 @@ Function setPictureWaterMark()
 		removePictureWaterMark()	&apos; 移除先前的浮水印
 		With _oBitMaps
 			If (.hasByName(WATERMARK_NAME)) Then
-				msgbox &quot;replace&quot;
+				&apos;msgbox &quot;replace&quot;
 				.replaceByName(WATERMARK_NAME, sWaterMarkURL)
 			Else
-				msgbox &quot;new&quot;
+				&apos;msgbox &quot;new&quot;
 				.insertByName(WATERMARK_NAME, sWaterMarkURL)
 			End If
 			sBitmapURL = .getByName(WATERMARK_NAME)	&apos; 取得內部 URL (vnd.sun.star.GraphicObject:....)
