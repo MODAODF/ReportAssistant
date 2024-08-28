@@ -4,13 +4,13 @@
  xmlns:dep="http://openoffice.org/extensions/description/2006"
  xmlns:xlink="http://www.w3.org/1999/xlink">
 	<identifier value="vnd.basicaddonbuilder.ReportAssistant"/>
-	<version value="1.1.0"/> 
+	<version value="1.1.1"/>
 	<dependencies>
         <OpenOffice.org-minimal-version value="3.4" dep:name="OpenOffice.org 3.4" />
     </dependencies>
 	<display-name>
-		<name lang="zh-tw">國發會範本工具</name>
-		<name lang="en">NDC Template Tools</name>
+		<name lang="zh-tw">ODF 文件範本設計工具</name>
+		<name lang="en">MODA ODF Template Tools</name>
 	</display-name>
 	<icon>
 		<default xlink:href="icons/Template-Tools.png"/>

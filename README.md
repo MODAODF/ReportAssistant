@@ -1,6 +1,6 @@
 ## ReportAssistant
 
-NDC Template Tools 國發會範本工具
+ODF 文件範本設計工具
 
 ## Linux產生ReportAssistant.oxt
 	1. 在clone or download 選擇 Download ZIP
