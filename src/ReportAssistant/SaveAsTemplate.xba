@@ -12,6 +12,7 @@ Sub Main
 	Dim oTemplatePath As Object
 	Dim sSaveFile As String
 	Dim oDocProps As Object
+	Dim options(0) As New "com.sun.star.beans.PropertyValue"
 
 	Set oDoc = ThisComponent
 
@@ -19,8 +20,12 @@ Sub Main
 	Select Case sDocType
 		Case &quot;swriter&quot;
 			sExtName = &quot;.ott&quot;
+			options(0).Name = "FilterName"
+			options(0).Value = "writer8_template"
 		Case &quot;scalc&quot;
 			sExtName = &quot;.ots&quot;
+			options(0).Name = "FilterName"
+			options(0).Value = "calc8_template"
 		Case Else
 			Msgbox(&quot;目前報表範本設計，只支援 Writer 及 Calc 格式&quot;)
 			Exit Sub
@@ -55,7 +60,7 @@ Sub Main
       	.setValue(com.sun.star.ui.dialogs.ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, 0, true)
 		If (.execute()) Then
 			sSaveFile = .Files(0)
-			oDoc.storeAsURL(sSaveFile, Array())
+			oDoc.storeAsURL(sSaveFile, options)
 		End If
 		.dispose
 	End With
